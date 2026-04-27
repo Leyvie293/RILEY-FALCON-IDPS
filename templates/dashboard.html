@@ -1,0 +1,1352 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Banner -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white shadow-lg">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-user-shield me-2"></i>Welcome back, {{ current_user.first_name }}!
+                            </h2>
+                            <p class="lead mb-0">
+                                <i class="fas fa-shield-alt me-2"></i>Riley Falcon Security Services - Security Operations Center
+                            </p>
+                            <div class="mt-3">
+                                <span class="badge bg-light text-dark me-2">
+                                    <i class="fas fa-clock me-1"></i>{{ current_time.strftime('%Y-%m-%d %H:%M:%S') }} EAT
+                                </span>
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-calendar me-1"></i>{{ current_time.strftime('%A, %B %d, %Y') }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 text-lg-end">
+                            <i class="fas fa-shield-alt fa-5x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Alerts</div>
+                            <div class="h2 mb-0 font-weight-bold text-gray-800" id="totalAlerts">{{ total_alerts }}</div>
+                            <div class="mt-2 small">
+                                <span class="text-success" id="alertTrend">
+                                    <i class="fas fa-arrow-up"></i> <span id="alertTrendValue">0</span>
+                                </span> from yesterday
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bell fa-3x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Critical Threats</div>
+                            <div class="h2 mb-0 font-weight-bold text-gray-800" id="criticalAlerts">{{ critical_alerts }}</div>
+                            <div class="mt-2 small">
+                                <span class="text-danger" id="criticalTrend">
+                                    <i class="fas fa-exclamation-circle"></i> <span id="criticalActive">{{ critical_alerts }}</span> active
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-skull-crossbones fa-3x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                High Alerts</div>
+                            <div class="h2 mb-0 font-weight-bold text-gray-800" id="highAlerts">{{ high_alerts }}</div>
+                            <div class="mt-2 small">
+                                <span class="text-warning" id="highTrend">
+                                    <i class="fas fa-clock"></i> <span id="highActive">{{ high_alerts }}</span> active
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-3x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                System Health</div>
+                            <div class="h2 mb-0 font-weight-bold text-gray-800" id="systemHealth">--%</div>
+                            <div class="mt-2 small">
+                                <span class="text-success" id="healthTrend">
+                                    <i class="fas fa-check-circle"></i> <span id="healthStatus">Collecting data...</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-heartbeat fa-3x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Network Traffic Chart -->
+    <div class="row mb-4">
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-line me-2"></i>Live Network Traffic (Last 12 Hours)
+                    </h6>
+                    <div>
+                        <span class="badge bg-success me-2" id="liveIndicator">● LIVE</span>
+                        <span class="badge bg-info" id="packetRate">{{ "%.0f"|format(total_packets/12 if total_packets > 0 else 0) }} p/h</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 300px;">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-pie me-2"></i>Alert Distribution
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie" style="height: 200px;">
+                        <canvas id="alertPieChart"></canvas>
+                    </div>
+                    <div class="mt-3">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="mb-2">
+                                    <span class="badge bg-danger">Critical</span>
+                                    <strong class="float-end" id="criticalPercent">{{ "%.1f"|format((critical_alerts/total_alerts*100) if total_alerts > 0 else 0) }}%</strong>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-warning">High</span>
+                                    <strong class="float-end" id="highPercent">{{ "%.1f"|format((high_alerts/total_alerts*100) if total_alerts > 0 else 0) }}%</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-2">
+                                    <span class="badge bg-info">Medium/Low</span>
+                                    <strong class="float-end" id="otherPercent">{{ "%.1f"|format(((total_alerts - critical_alerts - high_alerts)/total_alerts*100) if total_alerts > 0 else 0) }}%</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Metrics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-3">
+                            <i class="fas fa-network-wired fa-3x text-primary"></i>
+                        </div>
+                        <div class="col-9">
+                            <h6 class="text-uppercase text-muted mb-1">Network Traffic</h6>
+                            <h3 class="mb-0" id="totalPackets">{{ total_packets }}</h3>
+                            <small class="text-success" id="packetTrend">
+                                <i class="fas fa-arrow-up"></i> <span id="packetsToday">{{ total_packets }}</span> total packets
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-3">
+                            <i class="fas fa-exclamation-circle fa-3x text-danger"></i>
+                        </div>
+                        <div class="col-9">
+                            <h6 class="text-uppercase text-muted mb-1">Suspicious</h6>
+                            <h3 class="mb-0" id="suspiciousPackets">{{ suspicious_packets }}</h3>
+                            <small class="text-danger" id="suspiciousTrend">
+                                <i class="fas fa-exclamation-triangle"></i> {{ "%.1f"|format((suspicious_packets/total_packets*100) if total_packets > 0 else 0) }}% of traffic
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-3">
+                            <i class="fas fa-shield-alt fa-3x text-success"></i>
+                        </div>
+                        <div class="col-9">
+                            <h6 class="text-uppercase text-muted mb-1">Threats Detected</h6>
+                            <h3 class="mb-0" id="threatsBlocked">{{ suspicious_packets }}</h3>
+                            <small class="text-success" id="blockedRate">
+                                <i class="fas fa-check"></i> {{ "%.1f"|format((suspicious_packets/total_packets*100) if total_packets > 0 else 0) }}% detection rate
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-3">
+                            <i class="fas fa-clock fa-3x text-info"></i>
+                        </div>
+                        <div class="col-9">
+                            <h6 class="text-uppercase text-muted mb-1">Response Time</h6>
+                            <h3 class="mb-0" id="responseTime">--s</h3>
+                            <small class="text-info" id="responseMetric">
+                                <i class="fas fa-bolt"></i> Real-time monitoring
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Alerts and System Status -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bell me-2"></i>Recent Alerts
+                    </h6>
+                    <a href="{{ url_for('alerts') }}" class="btn btn-sm btn-primary">
+                        View All <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="recentAlertsTable">
+                            <thead>
+                                <tr>
+                                    <th>Time (EAT)</th>
+                                    <th>Severity</th>
+                                    <th>Type</th>
+                                    <th>Source</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentAlertsBody">
+                                {% if recent_alerts and recent_alerts|length > 0 %}
+                                    {% for alert in recent_alerts %}
+                                    <tr class="{% if not alert.is_resolved %}font-weight-bold{% endif %}">
+                                        <td>{{ alert.timestamp.strftime('%H:%M:%S') }}</td>
+                                        <td>
+                                            <span class="badge {% if alert.severity == 'critical' %}bg-danger
+                                                              {% elif alert.severity == 'high' %}bg-warning
+                                                              {% elif alert.severity == 'medium' %}bg-info
+                                                              {% else %}bg-success{% endif %}">
+                                                {{ alert.severity|upper }}
+                                            </span>
+                                        </td>
+                                        <td>{{ alert.alert_type|title }}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ alert.source|upper }}</span>
+                                        </td>
+                                        <td>
+                                            <span title="{{ alert.details }}">{{ alert.description[:50] }}{% if alert.description|length > 50 %}...{% endif %}</span>
+                                        </td>
+                                        <td>
+                                            {% if alert.is_resolved %}
+                                            <span class="badge bg-success">Resolved</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">Active</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                            <p class="text-muted">No recent alerts. Your system is secure.</p>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-server me-2"></i>System Status
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-network-wired text-primary me-2"></i>Network Monitor</span>
+                            <span class="badge" id="networkStatus">
+                                {% if network_monitor and network_monitor.is_monitoring %}Active{% else %}Standby{% endif %}
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" style="width: {% if network_monitor and network_monitor.is_monitoring %}100{% else %}0{% endif %}%;" id="networkProgress"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-server text-info me-2"></i>Host Monitor</span>
+                            <span class="badge" id="hostStatus">
+                                {% if host_monitor and host_monitor.is_monitoring %}Active{% else %}Standby{% endif %}
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {% if host_monitor and host_monitor.is_monitoring %}100{% else %}0{% endif %}%;" id="hostProgress"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-brain text-warning me-2"></i>AI Engine</span>
+                            <span class="badge" id="aiStatus">Loading...</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 0%;" id="aiProgress"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-database text-success me-2"></i>Database</span>
+                            <span class="badge bg-success" id="dbStatus">Connected</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" id="dbProgress"></div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <h6 class="mb-3">Quick Actions</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="location.href='{{ url_for('network_monitor') }}'">
+                                <i class="fas fa-play me-2"></i>Start Network Capture
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="generateQuickReport()">
+                                <i class="fas fa-file-pdf me-2"></i>Generate Daily Report
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="runSystemCheck()">
+                                <i class="fas fa-stethoscope me-2"></i>Run System Check
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Protocol Distribution and Top Threats -->
+    <div class="row">
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>Protocol Distribution
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar" style="height: 250px;">
+                        <canvas id="protocolBarChart"></canvas>
+                    </div>
+                    <div class="mt-3" id="protocolStats">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <span class="badge bg-primary mb-1">TCP</span>
+                                <strong class="d-block" id="tcpCount">0</strong>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge bg-success mb-1">UDP</span>
+                                <strong class="d-block" id="udpCount">0</strong>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge bg-info mb-1">ICMP</span>
+                                <strong class="d-block" id="icmpCount">0</strong>
+                            </div>
+                        </div>
+                        <div class="row text-center mt-2">
+                            <div class="col-4">
+                                <span class="badge bg-warning mb-1">HTTP</span>
+                                <strong class="d-block" id="httpCount">0</strong>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge bg-danger mb-1">HTTPS</span>
+                                <strong class="d-block" id="httpsCount">0</strong>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge bg-secondary mb-1">DNS</span>
+                                <strong class="d-block" id="dnsCount">0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Top Threat Types
+                    </h6>
+                    <span class="badge bg-success" id="threatLiveIndicator">● LIVE</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Threat Type</th>
+                                    <th>Count</th>
+                                    <th>Trend (24h)</th>
+                                    <th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topThreatsBody">
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                                        Loading real threat data...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+<script>
+    // Dashboard State Manager
+    class DashboardState {
+        constructor() {
+            this.data = {
+                network: null,
+                alerts: null,
+                host: null,
+                recentAlerts: [],
+                threats: null,
+                protocols: null
+            };
+            this.listeners = [];
+            this.isUpdating = false;
+        }
+
+        setNetwork(data) {
+            this.data.network = data;
+            this.notify('network');
+        }
+
+        setAlerts(data) {
+            this.data.alerts = data;
+            this.notify('alerts');
+        }
+
+        setHost(data) {
+            this.data.host = data;
+            this.notify('host');
+        }
+
+        setRecentAlerts(data) {
+            this.data.recentAlerts = data;
+            this.notify('recentAlerts');
+        }
+
+        setThreats(data) {
+            this.data.threats = data;
+            this.notify('threats');
+        }
+
+        setProtocols(data) {
+            this.data.protocols = data;
+            this.notify('protocols');
+        }
+
+        subscribe(listener) {
+            this.listeners.push(listener);
+        }
+
+        notify(component) {
+            this.listeners.forEach(fn => fn(this.data, component));
+        }
+    }
+
+    // Initialize state
+    const dashboardState = new DashboardState();
+
+    // Chart instances
+    let trafficChart, alertPieChart, protocolBarChart;
+    let updateInterval;
+    let socket = io();
+
+    // Initialize charts and state
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Initializing dashboard...');
+        initCharts();
+        
+        // Subscribe to state changes
+        dashboardState.subscribe((data, component) => {
+            if (component === 'network' && data.network) {
+                updateTrafficChart(data.network);
+                updatePacketStats(data.network);
+            }
+            if (component === 'alerts' && data.alerts) {
+                updateAlertPie(data.alerts);
+                updateAlertStats(data.alerts);
+                updatePercentages(data.alerts);
+            }
+            if (component === 'host' && data.host) {
+                updateSystemHealth(data.host);
+                updateMonitorStatus();
+            }
+            if (component === 'recentAlerts' && data.recentAlerts) {
+                updateRecentAlerts(data.recentAlerts);
+            }
+            if (component === 'threats' && data.threats) {
+                updateThreatsTable(data.threats);
+            }
+            if (component === 'protocols' && data.protocols) {
+                updateProtocolChart(data.protocols);
+            }
+        });
+
+        // Socket.IO event handlers
+        socket.on('connect', function() {
+            console.log('✅ Connected to real-time feed');
+            updateMonitorStatus();
+        });
+
+        socket.on('new_alert', function(alert) {
+            handleNewAlert(alert);
+        });
+
+        socket.on('alert_resolved', function(data) {
+            handleAlertResolved(data);
+        });
+
+        socket.on('monitoring_started', function(data) {
+            updateMonitorStatus();
+            showNotification(`Network capture started on ${data.interface}`, 'success');
+        });
+
+        socket.on('monitoring_stopped', function(data) {
+            updateMonitorStatus();
+            showNotification('Network capture stopped', 'info');
+        });
+
+        socket.on('threat_update', function(data) {
+            console.log('📊 Threat update received:', data);
+            if (data.threats) {
+                dashboardState.setThreats(data);
+            }
+        });
+
+        // Start live updates
+        startLiveUpdates();
+        
+        // Initial data fetch
+        refreshAllData();
+        
+        // Fetch AI status
+        fetchAIStatus();
+    });
+
+    function initCharts() {
+        // Traffic Chart
+        const trafficCtx = document.getElementById('trafficChart').getContext('2d');
+        trafficChart = new Chart(trafficCtx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_labels|safe }},
+                datasets: [{
+                    label: 'Network Traffic',
+                    data: {{ chart_values|safe }},
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 500 },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        title: { display: true, text: 'Packets per hour' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        title: { display: true, text: 'Time (EAT)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { mode: 'index', intersect: false }
+                }
+            }
+        });
+
+        // Alert Pie Chart
+        const pieCtx = document.getElementById('alertPieChart').getContext('2d');
+        const total = {{ total_alerts }} || 1;
+        const other = total - {{ critical_alerts }} - {{ high_alerts }};
+        
+        alertPieChart = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'High', 'Other'],
+                datasets: [{
+                    data: [
+                        {{ critical_alerts }}, 
+                        {{ high_alerts }}, 
+                        other > 0 ? other : 0
+                    ],
+                    backgroundColor: ['#e74a3b', '#f6c23e', '#36b9cc'],
+                    borderWidth: 0,
+                    hoverOffset: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                                return `${context.label}: ${context.raw} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Protocol Bar Chart
+        const barCtx = document.getElementById('protocolBarChart').getContext('2d');
+        protocolBarChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['TCP', 'UDP', 'ICMP', 'HTTP', 'HTTPS', 'DNS'],
+                datasets: [{
+                    label: 'Packets',
+                    data: [0, 0, 0, 0, 0, 0],
+                    backgroundColor: [
+                        'rgba(78, 115, 223, 0.8)',
+                        'rgba(28, 200, 138, 0.8)',
+                        'rgba(54, 185, 204, 0.8)',
+                        'rgba(246, 194, 62, 0.8)',
+                        'rgba(231, 74, 59, 0.8)',
+                        'rgba(133, 135, 150, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(78, 115, 223, 1)',
+                        'rgba(28, 200, 138, 1)',
+                        'rgba(54, 185, 204, 1)',
+                        'rgba(246, 194, 62, 1)',
+                        'rgba(231, 74, 59, 1)',
+                        'rgba(133, 135, 150, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.raw.toLocaleString()} packets`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async function refreshAllData() {
+        if (dashboardState.isUpdating) return;
+        dashboardState.isUpdating = true;
+
+        try {
+            const results = await Promise.allSettled([
+                safeFetch('/api/network/status'),
+                safeFetch('/api/alerts/stats'),
+                safeFetch('/api/host/stats'),
+                safeFetch('/api/alerts/recent?limit=5'),
+                safeFetch('/api/threats/stats'),
+                safeFetch('/api/network/protocol-details')  // New endpoint for protocol details
+            ]);
+
+            if (results[0].status === 'fulfilled' && results[0].value) {
+                dashboardState.setNetwork(results[0].value);
+            }
+            if (results[1].status === 'fulfilled' && results[1].value) {
+                dashboardState.setAlerts(results[1].value);
+            }
+            if (results[2].status === 'fulfilled' && results[2].value) {
+                dashboardState.setHost(results[2].value);
+            }
+            if (results[3].status === 'fulfilled' && results[3].value) {
+                dashboardState.setRecentAlerts(results[3].value);
+            }
+            if (results[4].status === 'fulfilled' && results[4].value) {
+                dashboardState.setThreats(results[4].value);
+            }
+            if (results[5].status === 'fulfilled' && results[5].value) {
+                dashboardState.setProtocols(results[5].value);
+            }
+
+        } catch (error) {
+            console.error('Dashboard refresh failed:', error);
+        } finally {
+            dashboardState.isUpdating = false;
+        }
+    }
+
+    async function safeFetch(url, fallback = null) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`Failed to fetch ${url}:`, error);
+            return fallback;
+        }
+    }
+
+    function startLiveUpdates() {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+        }
+        updateInterval = setInterval(refreshAllData, 5000);
+    }
+
+    async function fetchAIStatus() {
+        try {
+            const response = await fetch('/api/ai/status');
+            const data = await response.json();
+            updateAIStatus(data);
+        } catch (error) {
+            console.error('Failed to fetch AI status:', error);
+            document.getElementById('aiStatus').textContent = 'Unknown';
+            document.getElementById('aiStatus').className = 'badge bg-secondary';
+        }
+    }
+
+    function updateAIStatus(data) {
+        const statusEl = document.getElementById('aiStatus');
+        const progressEl = document.getElementById('aiProgress');
+        
+        if (data.models_loaded) {
+            statusEl.textContent = 'Active';
+            statusEl.className = 'badge bg-success';
+            progressEl.style.width = '100%';
+            if (data.last_training) {
+                statusEl.setAttribute('title', `Last trained: ${new Date(data.last_training).toLocaleString()}`);
+            }
+        } else {
+            statusEl.textContent = 'Training';
+            statusEl.className = 'badge bg-warning';
+            progressEl.style.width = '50%';
+        }
+    }
+
+    function updateTrafficChart(networkData) {
+        if (!trafficChart || !networkData || !networkData.chart_data) return;
+        
+        trafficChart.data.datasets[0].data = networkData.chart_data;
+        trafficChart.update();
+        
+        const packetRate = networkData.stats?.packets_per_second || 0;
+        document.getElementById('packetRate').textContent = packetRate.toFixed(1) + ' p/s';
+    }
+
+    function updateProtocolChart(protocolData) {
+        if (!protocolBarChart || !protocolData) return;
+        
+        // Update chart data with real counts
+        protocolBarChart.data.datasets[0].data = [
+            protocolData.tcp || 0,
+            protocolData.udp || 0,
+            protocolData.icmp || 0,
+            protocolData.http || 0,
+            protocolData.https || 0,
+            protocolData.dns || 0
+        ];
+        
+        protocolBarChart.update();
+        
+        // Update text stats
+        document.getElementById('tcpCount').textContent = (protocolData.tcp || 0).toLocaleString();
+        document.getElementById('udpCount').textContent = (protocolData.udp || 0).toLocaleString();
+        document.getElementById('icmpCount').textContent = (protocolData.icmp || 0).toLocaleString();
+        document.getElementById('httpCount').textContent = (protocolData.http || 0).toLocaleString();
+        document.getElementById('httpsCount').textContent = (protocolData.https || 0).toLocaleString();
+        document.getElementById('dnsCount').textContent = (protocolData.dns || 0).toLocaleString();
+    }
+
+    function updatePacketStats(networkData) {
+        if (!networkData || !networkData.stats) return;
+        
+        const stats = networkData.stats;
+        document.getElementById('totalPackets').textContent = (stats.total_packets || 0).toLocaleString();
+        document.getElementById('suspiciousPackets').textContent = (stats.suspicious_packets || 0).toLocaleString();
+        document.getElementById('packetsToday').textContent = (stats.total_packets || 0).toLocaleString();
+        
+        const suspiciousPercent = stats.total_packets > 0 
+            ? ((stats.suspicious_packets / stats.total_packets) * 100).toFixed(1)
+            : 0;
+        document.getElementById('suspiciousTrend').innerHTML = 
+            `<i class="fas fa-exclamation-triangle"></i> ${suspiciousPercent}% of traffic`;
+        
+        document.getElementById('threatsBlocked').textContent = (stats.suspicious_packets || 0).toLocaleString();
+        document.getElementById('blockedRate').innerHTML = 
+            `<i class="fas fa-check"></i> ${suspiciousPercent}% detection rate`;
+    }
+
+    function updateAlertPie(alertData) {
+        if (!alertPieChart || !alertData) return;
+        
+        const total = alertData.total || 1;
+        const other = total - (alertData.critical || 0) - (alertData.high || 0);
+        
+        alertPieChart.data.datasets[0].data = [
+            alertData.critical || 0,
+            alertData.high || 0,
+            other > 0 ? other : 0
+        ];
+        alertPieChart.update();
+    }
+
+    function updateAlertStats(alertData) {
+        if (!alertData) return;
+        
+        document.getElementById('totalAlerts').textContent = alertData.total || 0;
+        document.getElementById('criticalAlerts').textContent = alertData.critical || 0;
+        document.getElementById('highAlerts').textContent = alertData.high || 0;
+        document.getElementById('criticalActive').textContent = alertData.critical || 0;
+        document.getElementById('highActive').textContent = alertData.high || 0;
+        
+        const trend = (alertData.critical_trend || 0) + (alertData.high_trend || 0);
+        document.getElementById('alertTrendValue').textContent = 
+            trend > 0 ? '+' + trend : trend;
+    }
+
+    function updatePercentages(alertData) {
+        if (!alertData) return;
+        
+        const total = alertData.total || 1;
+        const critical = alertData.critical || 0;
+        const high = alertData.high || 0;
+        const other = total - critical - high;
+        
+        document.getElementById('criticalPercent').textContent = 
+            ((critical / total) * 100).toFixed(1) + '%';
+        document.getElementById('highPercent').textContent = 
+            ((high / total) * 100).toFixed(1) + '%';
+        document.getElementById('otherPercent').textContent = 
+            ((other / total) * 100).toFixed(1) + '%';
+    }
+
+    function updateSystemHealth(hostData) {
+        if (!hostData) return;
+        
+        const health = 100 - ((hostData.cpu_percent + hostData.memory_percent) / 2);
+        document.getElementById('systemHealth').textContent = health.toFixed(0) + '%';
+        
+        if (health > 90) {
+            document.getElementById('healthStatus').textContent = 'Excellent';
+            document.getElementById('healthTrend').className = 'text-success';
+        } else if (health > 70) {
+            document.getElementById('healthStatus').textContent = 'Good';
+            document.getElementById('healthTrend').className = 'text-info';
+        } else {
+            document.getElementById('healthStatus').textContent = 'Degraded';
+            document.getElementById('healthTrend').className = 'text-warning';
+        }
+        
+        // Update response time (simplified)
+        const responseTime = ((hostData.cpu_percent || 0) / 20 + 
+                             (hostData.memory_percent || 0) / 30).toFixed(1);
+        document.getElementById('responseTime').textContent = responseTime + 's';
+    }
+
+    function updateRecentAlerts(alerts) {
+        const tbody = document.getElementById('recentAlertsBody');
+        if (!tbody) return;
+
+        if (!alerts || alerts.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <p class="text-muted">No recent alerts. Your system is secure.</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        alerts.slice(0, 5).forEach(alert => {
+            const severityClass = alert.severity === 'critical' ? 'danger' :
+                                 alert.severity === 'high' ? 'warning' :
+                                 alert.severity === 'medium' ? 'info' : 'success';
+            
+            html += `
+                <tr class="${!alert.is_resolved ? 'font-weight-bold' : ''}">
+                    <td>${alert.timestamp.split(' ')[1]}</td>
+                    <td>
+                        <span class="badge bg-${severityClass}">
+                            ${alert.severity.toUpperCase()}
+                        </span>
+                    </td>
+                    <td>${alert.type || 'Signature'}</td>
+                    <td><span class="badge bg-secondary">${alert.source || 'NETWORK'}</span></td>
+                    <td>${alert.description.substring(0, 50)}${alert.description.length > 50 ? '...' : ''}</td>
+                    <td>
+                        <span class="badge bg-${alert.is_resolved ? 'success' : 'danger'}">
+                            ${alert.is_resolved ? 'Resolved' : 'Active'}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    function updateThreatsTable(data) {
+        const tbody = document.getElementById('topThreatsBody');
+        if (!tbody) return;
+        
+        if (!data || !data.threats || data.threats.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center py-4">
+                        <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                        <p class="text-muted">No threats detected in the last 24 hours</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        let html = '';
+        data.threats.slice(0, 5).forEach(threat => {
+            let trendIcon = '';
+            let trendColor = '';
+            if (threat.trend > 0) {
+                trendIcon = 'fa-arrow-up';
+                trendColor = 'text-danger';
+            } else if (threat.trend < 0) {
+                trendIcon = 'fa-arrow-down';
+                trendColor = 'text-success';
+            } else {
+                trendIcon = 'fa-minus';
+                trendColor = 'text-warning';
+            }
+            
+            let severityBadge = '';
+            if (threat.severity === 'critical') {
+                severityBadge = '<span class="badge bg-danger">Critical</span>';
+            } else if (threat.severity === 'high') {
+                severityBadge = '<span class="badge bg-warning">High</span>';
+            } else if (threat.severity === 'medium') {
+                severityBadge = '<span class="badge bg-info">Medium</span>';
+            } else {
+                severityBadge = '<span class="badge bg-success">Low</span>';
+            }
+            
+            html += `
+            <tr>
+                <td>
+                    <i class="fas fa-${getThreatIcon(threat.type)} me-2"></i>
+                    ${threat.type}
+                </td>
+                <td><strong>${threat.count}</strong></td>
+                <td class="${trendColor}">
+                    <i class="fas ${trendIcon} me-1"></i>
+                    ${Math.abs(threat.trend)}%
+                </td>
+                <td>${severityBadge}</td>
+            </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+
+    function getThreatIcon(type) {
+        const icons = {
+            'Port Scan': 'search',
+            'Brute Force': 'fist-raised',
+            'SQL Injection': 'database',
+            'Malware': 'bug',
+            'DDoS': 'server',
+            'Ransomware': 'skull',
+            'Phishing': 'fish',
+            'Man in Middle': 'exchange-alt',
+            'Zero Day': 'calendar-times',
+            'Botnet': 'network-wired'
+        };
+        
+        for (const [key, icon] of Object.entries(icons)) {
+            if (type.toLowerCase().includes(key.toLowerCase())) {
+                return icon;
+            }
+        }
+        return 'exclamation-triangle';
+    }
+
+    async function updateMonitorStatus() {
+        try {
+            const networkData = await safeFetch('/api/network/status');
+            if (networkData) {
+                const statusEl = document.getElementById('networkStatus');
+                const progressEl = document.getElementById('networkProgress');
+                
+                if (networkData.is_monitoring) {
+                    statusEl.textContent = 'Active';
+                    statusEl.className = 'badge bg-success';
+                    progressEl.style.width = '100%';
+                    progressEl.className = 'progress-bar bg-success';
+                } else {
+                    statusEl.textContent = 'Standby';
+                    statusEl.className = 'badge bg-secondary';
+                    progressEl.style.width = '0%';
+                }
+            }
+
+            const hostData = await safeFetch('/api/host/stats');
+            if (hostData) {
+                const statusEl = document.getElementById('hostStatus');
+                const progressEl = document.getElementById('hostProgress');
+                
+                if (hostData.is_monitoring) {
+                    statusEl.textContent = 'Active';
+                    statusEl.className = 'badge bg-success';
+                    progressEl.style.width = '100%';
+                } else {
+                    statusEl.textContent = 'Standby';
+                    statusEl.className = 'badge bg-secondary';
+                    progressEl.style.width = '0%';
+                }
+            }
+        } catch (error) {
+            console.error('Failed to update monitor status:', error);
+        }
+    }
+
+    function handleNewAlert(alert) {
+        if (alert.severity === 'critical' || alert.severity === 'high') {
+            let audio = new Audio('/static/sounds/alert.mp3');
+            audio.play().catch(e => console.log('Audio play failed:', e));
+        }
+        
+        showNotification(`New ${alert.severity} alert: ${alert.description}`, alert.severity);
+        refreshAllData();
+    }
+
+    function handleAlertResolved(data) {
+        showNotification(`Alert resolved by ${data.resolved_by}`, 'success');
+        refreshAllData();
+    }
+
+    function generateQuickReport() {
+        window.location.href = "{{ url_for('quick_report', report_type='daily') }}?format=pdf";
+        showNotification('Generating daily report...', 'info');
+    }
+
+    async function runSystemCheck() {
+        showNotification('Running system diagnostics...', 'info');
+        
+        try {
+            await refreshAllData();
+            await updateMonitorStatus();
+            await fetchAIStatus();
+            showNotification('System check complete. All systems operational.', 'success');
+        } catch (error) {
+            console.error('System check failed:', error);
+            showNotification('System check completed with warnings', 'warning');
+        }
+    }
+
+    function showNotification(message, type) {
+        const toastContainer = document.querySelector('.toast-container');
+        
+        const bgColor = {
+            'success': '#28a745',
+            'danger': '#dc3545',
+            'warning': '#ffc107',
+            'info': '#17a2b8',
+            'critical': '#dc3545',
+            'high': '#fd7e14'
+        }[type] || '#6c757d';
+        
+        const icon = {
+            'success': 'check-circle',
+            'danger': 'exclamation-circle',
+            'warning': 'exclamation-triangle',
+            'info': 'info-circle',
+            'critical': 'skull-crossbones',
+            'high': 'exclamation-circle'
+        }[type] || 'info-circle';
+        
+        const toastId = 'toast-' + Date.now();
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white border-0 show" role="alert" style="background-color: ${bgColor};">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-${icon} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        
+        setTimeout(() => {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 5000);
+    }
+
+    window.addEventListener('beforeunload', function() {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+        }
+    });
+</script>
+
+<style>
+    .border-left-primary { border-left: 4px solid #4e73df; }
+    .border-left-danger { border-left: 4px solid #e74a3b; }
+    .border-left-warning { border-left: 4px solid #f6c23e; }
+    .border-left-success { border-left: 4px solid #1cc88a; }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+    
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+        font-weight: 600;
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .chart-area, .chart-pie, .chart-bar {
+        position: relative;
+        width: 100%;
+    }
+    
+    .text-xs {
+        font-size: 0.7rem;
+    }
+    
+    .text-gray-300 {
+        color: #dddfeb !important;
+    }
+    
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+    
+    .opacity-50 {
+        opacity: 0.5;
+    }
+    
+    .progress {
+        border-radius: 10px;
+        background-color: #eaecf4;
+    }
+    
+    .progress-bar {
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        font-weight: 600;
+    }
+    
+    #liveIndicator, #threatLiveIndicator {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    .table td, .table th {
+        vertical-align: middle;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .btn {
+        transition: all 0.2s;
+        border-radius: 8px;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.1);
+    }
+    
+    .toast {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn-close-white {
+        filter: brightness(0) invert(1);
+    }
+    
+    .table thead th {
+        border-bottom: 2px solid #e3e6f0;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        background-color: #f8f9fc;
+    }
+    
+    @media (max-width: 768px) {
+        .chart-area, .chart-pie, .chart-bar {
+            height: 250px !important;
+        }
+    }
+</style>
+{% endblock %}

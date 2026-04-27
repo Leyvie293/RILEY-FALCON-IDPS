@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Flask
+instance/
+.webassets-cache
+.env
+.flaskenv
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Reports
+reports/
+*.pdf
+*.csv
+*.pptx
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Security
+config.py
+secrets.py
+*.key
+*.pem
+*.crt
+
+# Uploads
+uploads/
+temp/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Render deployment
+render.yaml

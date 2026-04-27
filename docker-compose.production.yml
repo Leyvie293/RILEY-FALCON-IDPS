@@ -1,0 +1,126 @@
+# docker-compose.production.yml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: rileyfalcon_db
+    environment:
+      POSTGRES_DB: rileyfalcon
+      POSTGRES_USER: ${DB_USER:-rileyfalcon}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_this_password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - rileyfalcon_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-rileyfalcon}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: rileyfalcon_redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    volumes:
+      - redis_data:/data
+    networks:
+      - rileyfalcon_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: rileyfalcon_web
+    environment:
+      FLASK_CONFIG: production
+      DATABASE_URL: postgresql://${DB_USER:-rileyfalcon}:${DB_PASSWORD:-change_this_password}@postgres:5432/rileyfalcon
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/0
+      SECRET_KEY: ${SECRET_KEY}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+    volumes:
+      - reports_data:/app/reports
+      - logs_data:/var/log/rileyfalcon
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - rileyfalcon_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    container_name: rileyfalcon_nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/nginx/ssl
+      - static_data:/app/static
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
+    networks:
+      - rileyfalcon_network
+    restart: unless-stopped
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: rileyfalcon_celery
+    command: celery -A tasks.celery worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-rileyfalcon}:${DB_PASSWORD:-change_this_password}@postgres:5432/rileyfalcon
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/0
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - rileyfalcon_network
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: rileyfalcon_beat
+    command: celery -A tasks.celery beat --loglevel=info
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-rileyfalcon}:${DB_PASSWORD:-change_this_password}@postgres:5432/rileyfalcon
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/0
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - rileyfalcon_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  reports_data:
+  logs_data:
+  static_data:
+
+networks:
+  rileyfalcon_network:
+    driver: bridge

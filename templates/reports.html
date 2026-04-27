@@ -1,0 +1,573 @@
+<!-- templates/reports.html -->
+{% extends "base.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">
+                <i class="fas fa-chart-bar"></i> Security Reports
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Report Generation Form -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-plus-circle"></i> Generate New Report
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('reports') }}" id="reportForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group mb-3">
+                            <label class="form-control-label">Report Type</label>
+                            {{ form.report_type(class="form-control", id="report_type") }}
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label class="form-control-label">Start Date</label>
+                            {{ form.start_date(class="form-control", type="date", id="start_date") }}
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label class="form-control-label">End Date</label>
+                            {{ form.end_date(class="form-control", type="date", id="end_date") }}
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-primary w-100") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Reports -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt"></i> Quick Reports
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <div class="btn-group-vertical w-100" role="group">
+                            <div class="btn-group w-100 mb-2" role="group">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-calendar-day"></i> Daily Report
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('daily', 'pdf')">PDF Format</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('daily', 'csv')">CSV Format</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('daily', 'ppt')">PPT Format</a></li>
+                                </ul>
+                            </div>
+                            
+                            <div class="btn-group w-100 mb-2" role="group">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-calendar-week"></i> Weekly Report
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('weekly', 'pdf')">PDF Format</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('weekly', 'csv')">CSV Format</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('weekly', 'ppt')">PPT Format</a></li>
+                                </ul>
+                            </div>
+                            
+                            <div class="btn-group w-100 mb-2" role="group">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-calendar-alt"></i> Monthly Report
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('monthly', 'pdf')">PDF Format</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('monthly', 'csv')">CSV Format</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('monthly', 'ppt')">PPT Format</a></li>
+                                </ul>
+                            </div>
+                            
+                            <div class="btn-group w-100" role="group">
+                                <button class="btn btn-outline-danger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-exclamation-triangle"></i> Incident Report
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('incident', 'pdf')">PDF Format</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('incident', 'csv')">CSV Format</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="generateQuickReport('incident', 'ppt')">PPT Format</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Previous Reports -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-history"></i> Previously Generated Reports
+                    </h6>
+                    <div>
+                        <button class="btn btn-sm btn-success" onclick="refreshReportList()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="reportsTable">
+                            <thead>
+                                <tr>
+                                    <th>Report Name</th>
+                                    <th>Type</th>
+                                    <th>Format</th>
+                                    <th>Generated (EAT)</th>
+                                    <th>Generated By</th>
+                                    <th>Date Range</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in previous_reports %}
+                                <tr id="report-{{ report.id }}">
+                                    <td>{{ report.name }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ report.type|title }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ report.format|upper }}</span>
+                                    </td>
+                                    <td>{{ report.generated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% set user = report.author if report.author else None %}
+                                        {{ user.username if user else report.generated_by }}
+                                    </td>
+                                    <td>
+                                        {{ report.date_range_start.strftime('%Y-%m-%d') }} to 
+                                        {{ report.date_range_end.strftime('%Y-%m-%d') }}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('download_report', report_id=report.id) }}" 
+                                               class="btn btn-sm btn-success" title="Download">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-primary" onclick="emailReport({{ report.id }})" title="Email">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteReport({{ report.id }})" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center">
+                                        <div class="py-5">
+                                            <i class="fas fa-folder-open fa-4x text-gray-300 mb-3"></i>
+                                            <p class="text-gray-500">No reports generated yet. Create your first report above.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Templates -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-file-alt"></i> Report Templates
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-left-primary h-100 template-card" onclick="useTemplate('security')">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                                    <h6>Security Summary</h6>
+                                    <p class="small text-muted">Overview of all security events</p>
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); useTemplate('security', 'pdf')">
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </button>
+                                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); useTemplate('security', 'csv')">
+                                            <i class="fas fa-file-csv"></i> CSV
+                                        </button>
+                                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); useTemplate('security', 'ppt')">
+                                            <i class="fas fa-file-powerpoint"></i> PPT
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-left-success h-100 template-card" onclick="useTemplate('traffic')">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                                    <h6>Traffic Analysis</h6>
+                                    <p class="small text-muted">Detailed network traffic report</p>
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); useTemplate('traffic', 'pdf')">
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </button>
+                                        <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); useTemplate('traffic', 'csv')">
+                                            <i class="fas fa-file-csv"></i> CSV
+                                        </button>
+                                        <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); useTemplate('traffic', 'ppt')">
+                                            <i class="fas fa-file-powerpoint"></i> PPT
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-left-danger h-100 template-card" onclick="useTemplate('incident')">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                                    <h6>Incident Report</h6>
+                                    <p class="small text-muted">Detailed security incident analysis</p>
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); useTemplate('incident', 'pdf')">
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); useTemplate('incident', 'csv')">
+                                            <i class="fas fa-file-csv"></i> CSV
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); useTemplate('incident', 'ppt')">
+                                            <i class="fas fa-file-powerpoint"></i> PPT
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Reports Card (Future Feature) -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clock"></i> Scheduled Reports
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Report scheduling feature is coming soon! You'll be able to schedule daily, weekly, and monthly reports to be automatically generated and emailed.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999"></div>
+
+<script>
+    // Quick Report Generation
+    function generateQuickReport(type, format) {
+        if (!format) format = 'pdf';
+        window.location.href = `/quick_report/${type}?format=${format}`;
+    }
+
+    // Template Usage
+    function useTemplate(template, format = 'pdf') {
+        let reportType;
+        let reportFormat = format;
+        
+        switch(template) {
+            case 'security':
+                reportType = 'weekly';
+                break;
+            case 'traffic':
+                reportType = 'daily';
+                break;
+            case 'incident':
+                reportType = 'incident';
+                break;
+            default:
+                reportType = 'weekly';
+        }
+        
+        generateQuickReport(reportType, reportFormat);
+    }
+
+    // Email Report
+    function emailReport(reportId) {
+        if (confirm('📧 Send this report via email?')) {
+            showNotification('Sending report...', 'info');
+            
+            fetch(`/report/${reportId}/email`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('✅ Report sent via email successfully!', 'success');
+                } else {
+                    showNotification('❌ Error: ' + (data.error || 'Failed to send email'), 'danger');
+                }
+            })
+            .catch(error => {
+                showNotification('❌ Error sending email. Please try again.', 'danger');
+                console.error('Email error:', error);
+            });
+        }
+    }
+
+    // Delete Report
+    function deleteReport(reportId) {
+        if (confirm('⚠️ Are you sure you want to delete this report?\nThis action cannot be undone.')) {
+            showNotification('Deleting report...', 'info');
+            
+            fetch(`/report/${reportId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the row from the table
+                    const row = document.getElementById(`report-${reportId}`);
+                    if (row) {
+                        row.remove();
+                        
+                        // Check if table is now empty
+                        const tbody = document.querySelector('#reportsTable tbody');
+                        if (tbody && tbody.children.length === 0) {
+                            location.reload(); // Reload to show empty state
+                        }
+                    }
+                    showNotification('✅ Report deleted successfully!', 'success');
+                } else {
+                    showNotification('❌ Error: ' + (data.error || 'Failed to delete report'), 'danger');
+                }
+            })
+            .catch(error => {
+                showNotification('❌ Error deleting report. Please try again.', 'danger');
+                console.error('Delete error:', error);
+            });
+        }
+    }
+
+    // Refresh Report List
+    function refreshReportList() {
+        showNotification('Refreshing report list...', 'info');
+        location.reload();
+    }
+
+    // Show Notification
+    function showNotification(message, type = 'info') {
+        const toastContainer = document.querySelector('.toast-container');
+        const toastId = 'toast-' + Date.now();
+        
+        const bgColor = {
+            'success': '#28a745',
+            'danger': '#dc3545',
+            'warning': '#ffc107',
+            'info': '#17a2b8'
+        }[type] || '#6c757d';
+        
+        const icon = {
+            'success': 'check-circle',
+            'danger': 'exclamation-circle',
+            'warning': 'exclamation-triangle',
+            'info': 'info-circle'
+        }[type] || 'info-circle';
+        
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white border-0 show" role="alert" style="background-color: ${bgColor};">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-${icon} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 5000);
+    }
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add IDs to form fields if they don't exist
+        const reportTypeSelect = document.querySelector('select[name="report_type"]');
+        const startDateInput = document.querySelector('input[name="start_date"]');
+        const endDateInput = document.querySelector('input[name="end_date"]');
+        
+        if (reportTypeSelect && !reportTypeSelect.id) reportTypeSelect.id = 'report_type';
+        if (startDateInput && !startDateInput.id) startDateInput.id = 'start_date';
+        if (endDateInput && !endDateInput.id) endDateInput.id = 'end_date';
+        
+        // Set default dates
+        if (startDateInput && !startDateInput.value) {
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 7);
+            startDateInput.value = sevenDaysAgo.toISOString().split('T')[0];
+        }
+        
+        if (endDateInput && !endDateInput.value) {
+            endDateInput.value = new Date().toISOString().split('T')[0];
+        }
+    });
+</script>
+
+<style>
+    .border-left-primary {
+        border-left: 4px solid #4e73df;
+    }
+    .border-left-success {
+        border-left: 4px solid #1cc88a;
+    }
+    .border-left-danger {
+        border-left: 4px solid #e74a3b;
+    }
+    
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 2rem rgba(0,0,0,0.15);
+    }
+    
+    .template-card {
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .template-card:hover {
+        background-color: #f8f9fc;
+    }
+    
+    .btn {
+        transition: all 0.2s;
+        border-radius: 6px;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.1);
+    }
+    
+    .btn-group .btn {
+        border-radius: 0;
+    }
+    
+    .btn-group .btn:first-child {
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+    }
+    
+    .btn-group .btn:last-child {
+        border-top-right-radius: 6px;
+        border-bottom-right-radius: 6px;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        font-weight: 600;
+    }
+    
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table th {
+        border-top: none;
+        background-color: #f8f9fc;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        border-radius: 8px;
+    }
+    
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+    
+    .toast {
+        min-width: 350px;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        margin-bottom: 0.5rem;
+    }
+    
+    .toast-body {
+        padding: 0.75rem 1rem;
+    }
+    
+    .btn-close-white {
+        filter: brightness(0) invert(1);
+    }
+    
+    @media (max-width: 768px) {
+        .btn-group-vertical > .btn-group {
+            width: 100%;
+        }
+        
+        .btn-group-vertical > .btn-group > .btn {
+            width: 100%;
+        }
+        
+        .dropdown-menu {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

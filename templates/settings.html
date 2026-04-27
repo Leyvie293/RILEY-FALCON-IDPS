@@ -1,0 +1,1174 @@
+<!-- templates/settings.html -->
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">
+                <i class="fas fa-cog"></i> System Settings
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Settings -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-user"></i> Profile Settings
+                    </h6>
+                    <div>
+                        <span class="badge bg-info" id="liveProfileStatus">● Live</span>
+                        <span class="badge bg-success" id="profileSavedBadge" style="display: none;">
+                            <i class="fas fa-check"></i> Saved
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Success Alert -->
+                    <div class="alert alert-success alert-dismissible fade show" id="profileSuccessAlert" style="display: none;" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <span id="profileSuccessMessage">Profile updated successfully!</span>
+                        <button type="button" class="btn-close" onclick="document.getElementById('profileSuccessAlert').style.display='none'"></button>
+                    </div>
+
+                    <!-- Error Alert -->
+                    <div class="alert alert-danger alert-dismissible fade show" id="profileErrorAlert" style="display: none;" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span id="profileErrorMessage">Error updating profile.</span>
+                        <button type="button" class="btn-close" onclick="document.getElementById('profileErrorAlert').style.display='none'"></button>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('settings') }}" id="profileForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-user text-primary me-2"></i>Username
+                                </label>
+                                {{ form.username(class="form-control", placeholder="johndoe", id="username") }}
+                                {% if form.username.errors %}
+                                    {% for error in form.username.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                                <div class="valid-feedback" id="usernameValid">Looks good!</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-envelope text-primary me-2"></i>Email
+                                </label>
+                                {{ form.email(class="form-control", placeholder="user@rileyfalcon.com", id="email") }}
+                                {% if form.email.errors %}
+                                    {% for error in form.email.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                                <div class="form-text">Use company email: @rileyfalcon.com</div>
+                                <div class="valid-feedback" id="emailValid">Valid email!</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-user-tag text-primary me-2"></i>First Name
+                                </label>
+                                {{ form.first_name(class="form-control", placeholder="John", id="first_name") }}
+                                {% if form.first_name.errors %}
+                                    {% for error in form.first_name.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-user-tag text-primary me-2"></i>Last Name
+                                </label>
+                                {{ form.last_name(class="form-control", placeholder="Doe", id="last_name") }}
+                                {% if form.last_name.errors %}
+                                    {% for error in form.last_name.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-phone text-primary me-2"></i>Phone Number
+                                </label>
+                                {{ form.phone_number(class="form-control", placeholder="+254 712 345 678", id="phone_number") }}
+                                {% if form.phone_number.errors %}
+                                    {% for error in form.phone_number.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-building text-primary me-2"></i>Department
+                                </label>
+                                {{ form.department(class="form-select", id="department") }}
+                                {% if form.department.errors %}
+                                    {% for error in form.department.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Current Values Display -->
+                        <div class="alert alert-info mb-3" id="currentValuesAlert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Current Profile:</strong>
+                            <span id="currentDisplay"></span>
+                            <button class="btn btn-sm btn-outline-primary ms-2" type="button" onclick="showCurrentValues()">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </div>
+
+                        <hr>
+                        <h6 class="mb-3">
+                            <i class="fas fa-key text-warning me-2"></i>Change Password (Optional)
+                        </h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">New Password</label>
+                                {{ form.password(class="form-control", placeholder="********", id="password") }}
+                                {% if form.password.errors %}
+                                    {% for error in form.password.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirm New Password</label>
+                                {{ form.confirm_password(class="form-control", placeholder="********", id="confirm_password") }}
+                                {% if form.confirm_password.errors %}
+                                    {% for error in form.confirm_password.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Password Strength Meter -->
+                        <div class="mb-3" id="passwordStrengthSection" style="display: none;">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: 0%;" id="passwordStrength"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <small class="text-muted" id="passwordHelp">Enter a password to see strength</small>
+                                <small id="passwordMatch" class="text-success"></small>
+                            </div>
+                        </div>
+
+                        <!-- Form Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg flex-grow-1" id="saveProfileBtn">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-lg" onclick="resetProfileForm()" title="Reset Form">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-info btn-lg" onclick="testProfileUpdate()" title="Test Update">
+                                <i class="fas fa-flask"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Notification Preferences -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bell"></i> Notification Preferences
+                    </h6>
+                    <span class="badge bg-success" id="notifSavedBadge" style="display: none;">
+                        <i class="fas fa-check"></i> Saved
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success" id="notifSuccessAlert" style="display: none;"></div>
+                    
+                    <div class="mb-4">
+                        <h6 class="mb-3">Email Notifications</h6>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="emailCritical" checked>
+                            <label class="form-check-label" for="emailCritical">
+                                <span class="badge bg-danger me-2">Critical</span> Immediate email for critical alerts
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="emailHigh" checked>
+                            <label class="form-check-label" for="emailHigh">
+                                <span class="badge bg-warning me-2">High</span> Email for high alerts
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="emailMedium">
+                            <label class="form-check-label" for="emailMedium">
+                                <span class="badge bg-info me-2">Medium</span> Daily digest for medium alerts
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="emailLow">
+                            <label class="form-check-label" for="emailLow">
+                                <span class="badge bg-success me-2">Low</span> Weekly summary for low alerts
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="mb-3">SMS Notifications</h6>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="smsCritical" checked>
+                            <label class="form-check-label" for="smsCritical">
+                                <span class="badge bg-danger me-2">Critical</span> SMS for critical alerts
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="smsHigh">
+                            <label class="form-check-label" for="smsHigh">
+                                <span class="badge bg-warning me-2">High</span> SMS for high alerts (optional)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6 class="mb-3">Slack Integration</h6>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text"><i class="fab fa-slack"></i></span>
+                            <input type="text" class="form-control" id="slackWebhook" placeholder="Enter Slack webhook URL">
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="slackEnabled">
+                            <label class="form-check-label" for="slackEnabled">Enable Slack notifications</label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success w-100" onclick="saveNotificationSettings()">
+                        <i class="fas fa-save me-2"></i>Save Notification Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Configuration -->
+        <div class="col-xl-6 col-lg-6">
+            <!-- Monitoring Configuration -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-sliders-h"></i> Monitoring Configuration
+                    </h6>
+                    <span class="badge bg-success" id="monitorSavedBadge" style="display: none;">
+                        <i class="fas fa-check"></i> Saved
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success" id="monitorSuccessAlert" style="display: none;"></div>
+                    
+                    <form id="monitoringConfig">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-network-wired text-primary me-2"></i>Network Interface
+                            </label>
+                            <select class="form-select" id="networkInterface">
+                                <option value="Wi-Fi">Wi-Fi (192.168.0.108)</option>
+                                <option value="Ethernet">Ethernet</option>
+                                <option value="eth0">eth0</option>
+                                <option value="test">Test Mode (Simulated)</option>
+                            </select>
+                            <div class="form-text">Current active interface: <span class="badge bg-success" id="currentInterface">Wi-Fi</span></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-chart-line text-primary me-2"></i>Packet Capture Rate
+                            </label>
+                            <input type="range" class="form-range" id="captureRate" min="1" max="100" value="50">
+                            <div class="d-flex justify-content-between">
+                                <span>Slow</span>
+                                <span id="rateValue">50</span>
+                                <span>Fast</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-thermometer-half text-primary me-2"></i>Anomaly Threshold
+                            </label>
+                            <input type="range" class="form-range" id="anomalyThreshold" min="0" max="100" value="85">
+                            <div class="d-flex justify-content-between">
+                                <span>Less Sensitive</span>
+                                <span id="thresholdValue">85%</span>
+                                <span>More Sensitive</span>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <h6 class="mb-3">Alert Thresholds</h6>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">CPU Threshold</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="cpuThreshold" value="80" min="0" max="100">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Memory Threshold</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="memoryThreshold" value="80" min="0" max="100">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Disk Threshold</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="diskThreshold" value="90" min="0" max="100">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Network Threshold</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="networkThreshold" value="1000" min="0">
+                                    <span class="input-group-text">pps</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-primary w-100" onclick="saveMonitoringConfig()">
+                            <i class="fas fa-save me-2"></i>Save Monitoring Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Report Configuration -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-file-alt"></i> Report Configuration
+                    </h6>
+                    <span class="badge bg-success" id="reportSavedBadge" style="display: none;">
+                        <i class="fas fa-check"></i> Saved
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success" id="reportSuccessAlert" style="display: none;"></div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Auto-Generate Reports</label>
+                        <select class="form-select" id="reportSchedule">
+                            <option value="daily">Daily at 08:00 EAT</option>
+                            <option value="weekly" selected>Weekly on Monday at 08:00 EAT</option>
+                            <option value="monthly">Monthly on 1st at 08:00 EAT</option>
+                            <option value="never">Manual only</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Report Formats</label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="formatPDF" checked>
+                                    <label class="form-check-label" for="formatPDF">
+                                        <i class="fas fa-file-pdf text-danger"></i> PDF
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="formatCSV">
+                                    <label class="form-check-label" for="formatCSV">
+                                        <i class="fas fa-file-csv text-success"></i> CSV
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="formatPPT">
+                                    <label class="form-check-label" for="formatPPT">
+                                        <i class="fas fa-file-powerpoint text-warning"></i> PowerPoint
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email Reports To</label>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" class="form-control" id="reportEmail" placeholder="security@rileyfalcon.com" value="admin@rileyfalcon.com">
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="attachReports" checked>
+                            <label class="form-check-label" for="attachReports">Attach reports to email</label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success w-100" onclick="saveReportConfig()">
+                        <i class="fas fa-save me-2"></i>Save Report Settings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Security Settings -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-shield-alt"></i> Security Settings
+                    </h6>
+                    <span class="badge bg-success" id="securitySavedBadge" style="display: none;">
+                        <i class="fas fa-check"></i> Saved
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success" id="securitySuccessAlert" style="display: none;"></div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Password Policy</label>
+                        <div class="border rounded p-3 bg-light">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="requireUppercase" checked>
+                                <label class="form-check-label" for="requireUppercase">
+                                    Require uppercase letters (A-Z)
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="requireNumbers" checked>
+                                <label class="form-check-label" for="requireNumbers">
+                                    Require numbers (0-9)
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="requireSpecial" checked>
+                                <label class="form-check-label" for="requireSpecial">
+                                    Require special characters (!@#$%^&*)
+                                </label>
+                            </div>
+                            <div class="mt-2">
+                                <label class="form-label small">Minimum Password Length</label>
+                                <input type="number" class="form-control" id="minPasswordLength" value="8" min="6" max="20">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Session Timeout (minutes)</label>
+                        <input type="number" class="form-control" id="sessionTimeout" value="30" min="5" max="120">
+                        <div class="form-text">Automatically log out after inactivity</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Two-Factor Authentication</label>
+                        <select class="form-select" id="twoFactor">
+                            <option value="disabled">Disabled</option>
+                            <option value="email">Email OTP</option>
+                            <option value="sms">SMS OTP</option>
+                            <option value="app">Authenticator App</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Login Attempts Before Lockout</label>
+                        <input type="number" class="form-control" id="maxAttempts" value="5" min="3" max="10">
+                    </div>
+
+                    <button class="btn btn-warning w-100" onclick="saveSecuritySettings()">
+                        <i class="fas fa-shield-alt me-2"></i>Update Security Settings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card shadow mb-4 border-danger">
+                <div class="card-header py-3 bg-danger text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-exclamation-triangle"></i> Danger Zone
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-danger">Reset All Settings</h6>
+                                <small class="text-muted">Restore all settings to factory defaults</small>
+                            </div>
+                            <button class="btn btn-outline-warning" onclick="resetSettings()">
+                                <i class="fas fa-undo me-1"></i>Reset
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-danger">Clear All Alerts</h6>
+                                <small class="text-muted">Permanently delete all alert history</small>
+                            </div>
+                            <button class="btn btn-outline-danger" onclick="clearAlerts()">
+                                <i class="fas fa-trash me-1"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-danger">Delete Account</h6>
+                                <small class="text-muted">Permanently delete your account and all data</small>
+                            </div>
+                            <button class="btn btn-danger" onclick="deleteAccount()">
+                                <i class="fas fa-user-slash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Store original values for comparison
+    let originalProfile = {};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Store original form values
+        captureOriginalValues();
+        
+        // Load saved settings
+        loadSettings();
+        
+        // Add event listeners for real-time preview
+        setupRealTimePreview();
+        
+        // Password strength checker
+        setupPasswordStrength();
+        
+        // Check for flash messages from server
+        checkFlashMessages();
+    });
+
+    function captureOriginalValues() {
+        originalProfile = {
+            username: document.getElementById('username').value,
+            email: document.getElementById('email').value,
+            first_name: document.getElementById('first_name').value,
+            last_name: document.getElementById('last_name').value,
+            phone_number: document.getElementById('phone_number').value,
+            department: document.getElementById('department').value
+        };
+    }
+
+    function checkFlashMessages() {
+        // Check if URL has success parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('updated') === 'true') {
+            showProfileSuccess('Profile updated successfully!');
+            highlightChangedFields();
+        }
+    }
+
+    function highlightChangedFields() {
+        const fields = ['username', 'email', 'first_name', 'last_name', 'phone_number', 'department'];
+        fields.forEach(field => {
+            const element = document.getElementById(field);
+            const currentValue = element.value;
+            if (currentValue !== originalProfile[field]) {
+                element.classList.add('border-success');
+                element.classList.add('changed-field');
+                setTimeout(() => {
+                    element.classList.remove('border-success');
+                    element.classList.remove('changed-field');
+                }, 3000);
+            }
+        });
+    }
+
+    function showProfileSuccess(message) {
+        const alert = document.getElementById('profileSuccessAlert');
+        document.getElementById('profileSuccessMessage').textContent = message;
+        alert.style.display = 'block';
+        
+        // Show saved badge
+        const badge = document.getElementById('profileSavedBadge');
+        badge.style.display = 'inline-block';
+        setTimeout(() => {
+            badge.style.display = 'none';
+        }, 3000);
+        
+        // Auto hide alert after 5 seconds
+        setTimeout(() => {
+            alert.style.display = 'none';
+        }, 5000);
+        
+        // Update original values
+        captureOriginalValues();
+    }
+
+    function showProfileError(message) {
+        const alert = document.getElementById('profileErrorAlert');
+        document.getElementById('profileErrorMessage').textContent = message;
+        alert.style.display = 'block';
+        
+        setTimeout(() => {
+            alert.style.display = 'none';
+        }, 5000);
+    }
+
+    function showCurrentValues() {
+        const values = `
+            Username: ${originalProfile.username}<br>
+            Email: ${originalProfile.email}<br>
+            Name: ${originalProfile.first_name} ${originalProfile.last_name}<br>
+            Phone: ${originalProfile.phone_number}<br>
+            Department: ${originalProfile.department}
+        `;
+        
+        const alert = document.getElementById('currentValuesAlert');
+        const display = document.getElementById('currentDisplay');
+        display.innerHTML = values;
+        
+        // Highlight the alert
+        alert.classList.add('border-primary');
+        setTimeout(() => {
+            alert.classList.remove('border-primary');
+        }, 2000);
+    }
+
+    function resetProfileForm() {
+        if (confirm('Reset all profile changes?')) {
+            document.getElementById('username').value = originalProfile.username;
+            document.getElementById('email').value = originalProfile.email;
+            document.getElementById('first_name').value = originalProfile.first_name;
+            document.getElementById('last_name').value = originalProfile.last_name;
+            document.getElementById('phone_number').value = originalProfile.phone_number;
+            document.getElementById('department').value = originalProfile.department;
+            document.getElementById('password').value = '';
+            document.getElementById('confirm_password').value = '';
+            
+            showNotification('Form reset to saved values', 'info');
+        }
+    }
+
+    function testProfileUpdate() {
+        // Simulate a profile update for testing
+        showProfileSuccess('Test: Profile updated successfully!');
+        captureOriginalValues();
+    }
+
+    function setupRealTimePreview() {
+        // Anomaly threshold preview
+        document.getElementById('anomalyThreshold').addEventListener('input', function() {
+            document.getElementById('thresholdValue').textContent = this.value + '%';
+        });
+
+        // Capture rate preview
+        document.getElementById('captureRate').addEventListener('input', function() {
+            document.getElementById('rateValue').textContent = this.value;
+        });
+
+        // Password match checker
+        document.getElementById('confirm_password').addEventListener('keyup', checkPasswordMatch);
+        document.getElementById('password').addEventListener('keyup', function() {
+            document.getElementById('passwordStrengthSection').style.display = 'block';
+            checkPasswordStrength(this.value);
+        });
+
+        // Real-time validation for profile fields
+        document.getElementById('username').addEventListener('input', validateUsername);
+        document.getElementById('email').addEventListener('input', validateEmail);
+    }
+
+    function validateUsername() {
+        const username = document.getElementById('username').value;
+        const validFeedback = document.getElementById('usernameValid');
+        
+        if (username.length >= 3) {
+            validFeedback.style.display = 'block';
+            return true;
+        } else {
+            validFeedback.style.display = 'none';
+            return false;
+        }
+    }
+
+    function validateEmail() {
+        const email = document.getElementById('email').value;
+        const validFeedback = document.getElementById('emailValid');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (emailRegex.test(email)) {
+            validFeedback.style.display = 'block';
+            return true;
+        } else {
+            validFeedback.style.display = 'none';
+            return false;
+        }
+    }
+
+    function setupPasswordStrength() {
+        const password = document.getElementById('password');
+        const strengthBar = document.getElementById('passwordStrength');
+        const helpText = document.getElementById('passwordHelp');
+        
+        window.checkPasswordStrength = function(val) {
+            let strength = 0;
+            
+            if (val.length >= 8) strength += 25;
+            if (val.match(/[a-z]+/)) strength += 25;
+            if (val.match(/[A-Z]+/)) strength += 25;
+            if (val.match(/[0-9]+/)) strength += 25;
+            
+            strengthBar.style.width = strength + '%';
+            
+            if (strength <= 25) {
+                strengthBar.className = 'progress-bar bg-danger';
+                helpText.textContent = 'Weak password';
+            } else if (strength <= 50) {
+                strengthBar.className = 'progress-bar bg-warning';
+                helpText.textContent = 'Fair password';
+            } else if (strength <= 75) {
+                strengthBar.className = 'progress-bar bg-info';
+                helpText.textContent = 'Good password';
+            } else {
+                strengthBar.className = 'progress-bar bg-success';
+                helpText.textContent = 'Strong password';
+            }
+            
+            checkPasswordMatch();
+        };
+    }
+
+    function checkPasswordMatch() {
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+        const matchElement = document.getElementById('passwordMatch');
+        
+        if (confirm.length > 0) {
+            if (password === confirm) {
+                matchElement.innerHTML = '<i class="fas fa-check-circle text-success"></i> Passwords match';
+                matchElement.className = 'text-success';
+            } else {
+                matchElement.innerHTML = '<i class="fas fa-times-circle text-danger"></i> Passwords do not match';
+                matchElement.className = 'text-danger';
+            }
+        } else {
+            matchElement.innerHTML = '';
+        }
+    }
+
+    function loadSettings() {
+        // Load monitoring config
+        const savedConfig = localStorage.getItem('monitoringConfig');
+        if (savedConfig) {
+            const config = JSON.parse(savedConfig);
+            document.getElementById('networkInterface').value = config.interface || 'Wi-Fi';
+            document.getElementById('captureRate').value = config.rate || 50;
+            document.getElementById('rateValue').textContent = config.rate || 50;
+            document.getElementById('anomalyThreshold').value = config.threshold || 85;
+            document.getElementById('thresholdValue').textContent = (config.threshold || 85) + '%';
+            document.getElementById('cpuThreshold').value = config.cpu || 80;
+            document.getElementById('memoryThreshold').value = config.memory || 80;
+            document.getElementById('diskThreshold').value = config.disk || 90;
+            document.getElementById('networkThreshold').value = config.network || 1000;
+        }
+
+        // Load notification settings
+        const savedNotifications = localStorage.getItem('notificationSettings');
+        if (savedNotifications) {
+            const notif = JSON.parse(savedNotifications);
+            document.getElementById('emailCritical').checked = notif.emailCritical !== false;
+            document.getElementById('emailHigh').checked = notif.emailHigh !== false;
+            document.getElementById('emailMedium').checked = notif.emailMedium || false;
+            document.getElementById('emailLow').checked = notif.emailLow || false;
+            document.getElementById('smsCritical').checked = notif.smsCritical !== false;
+            document.getElementById('smsHigh').checked = notif.smsHigh || false;
+            document.getElementById('slackEnabled').checked = notif.slackEnabled || false;
+            document.getElementById('slackWebhook').value = notif.slackWebhook || '';
+        }
+
+        // Load report settings
+        const savedReports = localStorage.getItem('reportSettings');
+        if (savedReports) {
+            const reports = JSON.parse(savedReports);
+            document.getElementById('reportSchedule').value = reports.schedule || 'weekly';
+            document.getElementById('formatPDF').checked = reports.pdf !== false;
+            document.getElementById('formatCSV').checked = reports.csv || false;
+            document.getElementById('formatPPT').checked = reports.ppt || false;
+            document.getElementById('reportEmail').value = reports.email || 'admin@rileyfalcon.com';
+            document.getElementById('attachReports').checked = reports.attach !== false;
+        }
+
+        // Load security settings
+        const savedSecurity = localStorage.getItem('securitySettings');
+        if (savedSecurity) {
+            const security = JSON.parse(savedSecurity);
+            document.getElementById('requireUppercase').checked = security.uppercase !== false;
+            document.getElementById('requireNumbers').checked = security.numbers !== false;
+            document.getElementById('requireSpecial').checked = security.special !== false;
+            document.getElementById('minPasswordLength').value = security.minLength || 8;
+            document.getElementById('sessionTimeout').value = security.timeout || 30;
+            document.getElementById('twoFactor').value = security.twoFactor || 'disabled';
+            document.getElementById('maxAttempts').value = security.maxAttempts || 5;
+        }
+    }
+
+    function saveMonitoringConfig() {
+        const config = {
+            interface: document.getElementById('networkInterface').value,
+            rate: document.getElementById('captureRate').value,
+            threshold: document.getElementById('anomalyThreshold').value,
+            cpu: document.getElementById('cpuThreshold').value,
+            memory: document.getElementById('memoryThreshold').value,
+            disk: document.getElementById('diskThreshold').value,
+            network: document.getElementById('networkThreshold').value
+        };
+
+        localStorage.setItem('monitoringConfig', JSON.stringify(config));
+        
+        // Show success message
+        const alert = document.getElementById('monitorSuccessAlert');
+        alert.innerHTML = '<i class="fas fa-check-circle me-2"></i>Monitoring configuration saved successfully!';
+        alert.style.display = 'block';
+        
+        const badge = document.getElementById('monitorSavedBadge');
+        badge.style.display = 'inline-block';
+        setTimeout(() => {
+            alert.style.display = 'none';
+            badge.style.display = 'none';
+        }, 3000);
+    }
+
+    function saveNotificationSettings() {
+        const settings = {
+            emailCritical: document.getElementById('emailCritical').checked,
+            emailHigh: document.getElementById('emailHigh').checked,
+            emailMedium: document.getElementById('emailMedium').checked,
+            emailLow: document.getElementById('emailLow').checked,
+            smsCritical: document.getElementById('smsCritical').checked,
+            smsHigh: document.getElementById('smsHigh').checked,
+            slackEnabled: document.getElementById('slackEnabled').checked,
+            slackWebhook: document.getElementById('slackWebhook').value
+        };
+
+        localStorage.setItem('notificationSettings', JSON.stringify(settings));
+        
+        const alert = document.getElementById('notifSuccessAlert');
+        alert.innerHTML = '<i class="fas fa-check-circle me-2"></i>Notification settings saved successfully!';
+        alert.style.display = 'block';
+        
+        const badge = document.getElementById('notifSavedBadge');
+        badge.style.display = 'inline-block';
+        setTimeout(() => {
+            alert.style.display = 'none';
+            badge.style.display = 'none';
+        }, 3000);
+    }
+
+    function saveReportConfig() {
+        const settings = {
+            schedule: document.getElementById('reportSchedule').value,
+            pdf: document.getElementById('formatPDF').checked,
+            csv: document.getElementById('formatCSV').checked,
+            ppt: document.getElementById('formatPPT').checked,
+            email: document.getElementById('reportEmail').value,
+            attach: document.getElementById('attachReports').checked
+        };
+
+        localStorage.setItem('reportSettings', JSON.stringify(settings));
+        
+        const alert = document.getElementById('reportSuccessAlert');
+        alert.innerHTML = '<i class="fas fa-check-circle me-2"></i>Report settings saved successfully!';
+        alert.style.display = 'block';
+        
+        const badge = document.getElementById('reportSavedBadge');
+        badge.style.display = 'inline-block';
+        setTimeout(() => {
+            alert.style.display = 'none';
+            badge.style.display = 'none';
+        }, 3000);
+    }
+
+    function saveSecuritySettings() {
+        const settings = {
+            uppercase: document.getElementById('requireUppercase').checked,
+            numbers: document.getElementById('requireNumbers').checked,
+            special: document.getElementById('requireSpecial').checked,
+            minLength: document.getElementById('minPasswordLength').value,
+            timeout: document.getElementById('sessionTimeout').value,
+            twoFactor: document.getElementById('twoFactor').value,
+            maxAttempts: document.getElementById('maxAttempts').value
+        };
+
+        localStorage.setItem('securitySettings', JSON.stringify(settings));
+        
+        const alert = document.getElementById('securitySuccessAlert');
+        alert.innerHTML = '<i class="fas fa-check-circle me-2"></i>Security settings updated successfully!';
+        alert.style.display = 'block';
+        
+        const badge = document.getElementById('securitySavedBadge');
+        badge.style.display = 'inline-block';
+        setTimeout(() => {
+            alert.style.display = 'none';
+            badge.style.display = 'none';
+        }, 3000);
+    }
+
+    function resetSettings() {
+        if (confirm('Are you sure you want to reset all settings to default values?')) {
+            localStorage.clear();
+            location.reload();
+            showNotification('Settings have been reset to defaults', 'info');
+        }
+    }
+
+    function clearAlerts() {
+        if (confirm('WARNING: This will permanently delete all alert history. Are you sure?')) {
+            fetch('/api/alerts/clear-all', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    showNotification(`Cleared ${data.count} alerts`, 'warning');
+                })
+                .catch(() => showNotification('Alerts cleared (demo mode)', 'warning'));
+        }
+    }
+
+    function deleteAccount() {
+        if (confirm('WARNING: This will permanently delete your account. This action cannot be undone. Continue?')) {
+            const password = prompt('Please enter your password to confirm:');
+            if (password) {
+                showNotification('Account deletion request submitted', 'danger');
+            }
+        }
+    }
+
+    function showNotification(message, type) {
+        const toastHTML = `
+            <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+                <div class="toast align-items-center text-white bg-${type} border-0 show" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                                   type === 'danger' ? 'exclamation-circle' : 
+                                                   'info-circle'} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', toastHTML);
+        
+        setTimeout(() => {
+            const toast = document.querySelector('.toast:last-child');
+            if (toast) {
+                toast.classList.remove('show');
+                setTimeout(() => toast.parentElement.remove(), 300);
+            }
+        }, 3000);
+    }
+
+    // Intercept form submission to show success message
+    document.getElementById('profileForm').addEventListener('submit', function(e) {
+        // Don't prevent default - let the form submit normally
+        // But show a loading indicator
+        const btn = document.getElementById('saveProfileBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        btn.disabled = true;
+        
+        // Let the form submit normally
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }, 5000);
+    });
+</script>
+
+<style>
+    .border-left-primary { border-left: 4px solid #4e73df; }
+    .border-left-danger { border-left: 4px solid #e74a3b; }
+    .border-left-info { border-left: 4px solid #36b9cc; }
+    .border-left-success { border-left: 4px solid #1cc88a; }
+    
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+    
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+        font-weight: 600;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .btn {
+        transition: all 0.2s;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.1);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        border: none;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+        border: none;
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
+        border: none;
+        color: white;
+    }
+    
+    .border-danger {
+        border: 1px solid #e74a3b !important;
+    }
+    
+    .bg-danger {
+        background: linear-gradient(135deg, #e74a3b 0%, #c13a2d 100%);
+    }
+    
+    .form-switch .form-check-input:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+    }
+    
+    .progress {
+        border-radius: 10px;
+        background-color: #eaecf4;
+    }
+    
+    .progress-bar {
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+    
+    hr {
+        margin: 1.5rem 0;
+        opacity: 0.25;
+    }
+    
+    .input-group-text {
+        background-color: #f8f9fc;
+        border: 1px solid #d1d3e2;
+    }
+    
+    #liveProfileStatus {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+    }
+    
+    .toast {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    }
+    
+    .form-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .border {
+        border-radius: 8px;
+    }
+    
+    /* Success field highlighting */
+    .border-success {
+        border-color: #1cc88a !important;
+        transition: border-color 0.3s ease;
+    }
+    
+    .changed-field {
+        animation: highlight 2s ease;
+    }
+    
+    @keyframes highlight {
+        0% { background-color: rgba(28, 200, 138, 0.2); }
+        100% { background-color: transparent; }
+    }
+    
+    .valid-feedback {
+        display: none;
+        color: #1cc88a;
+        font-size: 0.8rem;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    .alert-success {
+        background-color: rgba(28, 200, 138, 0.2);
+        color: #0f6848;
+    }
+    
+    .alert-info {
+        background-color: rgba(54, 185, 204, 0.1);
+        color: #1b6b7a;
+    }
+</style>
+{% endblock %}

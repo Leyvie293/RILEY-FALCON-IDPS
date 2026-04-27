@@ -1,0 +1,1299 @@
+<!-- templates/host_monitor.html -->
+{% extends "base.html" %}
+
+{% block title %}Host Monitor{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">
+                <i class="fas fa-server"></i> Host-Based Intrusion Detection System (HIDS)
+            </h1>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Processes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalProcesses">{{ total_processes }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Suspicious Processes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="suspiciousProcesses">{{ suspicious_processes }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                System Uptime</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="systemUptime">0d 0h 0m</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Users</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeUsers">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Resources Charts -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-microchip"></i> CPU Usage
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 200px;">
+                        <canvas id="cpuChart"></canvas>
+                    </div>
+                    <div class="text-center mt-2">
+                        <span class="badge bg-info" id="currentCpu">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-memory"></i> Memory Usage
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 200px;">
+                        <canvas id="memoryChart"></canvas>
+                    </div>
+                    <div class="text-center mt-2">
+                        <span class="badge bg-success" id="currentMemory">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-hdd"></i> Disk Usage
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 200px;">
+                        <canvas id="diskChart"></canvas>
+                    </div>
+                    <div class="text-center mt-2">
+                        <span class="badge bg-warning" id="currentDisk">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top CPU Processes -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-line"></i> Top CPU Processes
+                    </h6>
+                    <div>
+                        <button class="btn btn-sm btn-primary" onclick="refreshProcesses()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="killSuspicious()">
+                            <i class="fas fa-skull-crossbones"></i> Kill Suspicious
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="topProcessesTable">
+                            <thead>
+                                <tr>
+                                    <th>Process</th>
+                                    <th>PID</th>
+                                    <th>User</th>
+                                    <th>CPU %</th>
+                                    <th>Memory %</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topProcessesBody">
+                                {% if top_cpu and top_cpu|length > 0 %}
+                                    {% for proc in top_cpu %}
+                                    <tr class="{% if proc.is_suspicious %}table-danger{% endif %}">
+                                        <td>
+                                            <i class="fas fa-cog me-2"></i>{{ proc.process_name if proc.process_name else proc.name }}
+                                            {% if proc.is_suspicious %}
+                                            <span class="badge bg-danger ms-2">Suspicious</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ proc.process_id if proc.process_id else proc.pid }}</td>
+                                        <td>{{ proc.user }}</td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar {% if (proc.cpu_usage|float) > 80 %}bg-danger{% elif (proc.cpu_usage|float) > 50 %}bg-warning{% else %}bg-success{% endif %}" 
+                                                     role="progressbar" style="width: {{ proc.cpu_usage }}%;">
+                                                    {{ "%.1f"|format(proc.cpu_usage|float) }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-info" role="progressbar" 
+                                                     style="width: {{ proc.memory_usage }}%;">
+                                                    {{ "%.1f"|format(proc.memory_usage|float) }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if proc.is_suspicious %}
+                                            <span class="badge bg-danger">⚠️ Suspicious</span>
+                                            {% else %}
+                                            <span class="badge bg-success">✓ Normal</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info" onclick="viewProcess({{ proc.process_id if proc.process_id else proc.pid }})">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            {% if proc.is_suspicious %}
+                                            <button class="btn btn-sm btn-danger" onclick="killProcess({{ proc.process_id if proc.process_id else proc.pid }}, '{{ proc.process_name if proc.process_name else proc.name }}')">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center">
+                                            <div class="py-5">
+                                                <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+                                                <h5 class="text-gray-500">Collecting Process Data</h5>
+                                                <p class="text-muted mb-3">The host monitor is gathering real-time process information from your system.</p>
+                                                <div class="progress w-50 mx-auto">
+                                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                         role="progressbar" style="width: 100%"></div>
+                                                </div>
+                                                <p class="mt-3 small text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    This may take a few moments on first run
+                                                </p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Process Monitor Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list"></i> Process Monitor
+                    </h6>
+                    <div>
+                        <button class="btn btn-sm btn-success" onclick="exportProcesses()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Bar -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" id="searchProcess" placeholder="🔍 Search process..." value="{{ search }}">
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="filterStatus">
+                                <option value="all" {% if status == 'all' %}selected{% endif %}>All Processes</option>
+                                <option value="suspicious" {% if status == 'suspicious' %}selected{% endif %}>Suspicious Only</option>
+                                <option value="normal" {% if status == 'normal' %}selected{% endif %}>Normal Only</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="sortBy">
+                                <option value="cpu" {% if sort == 'cpu' %}selected{% endif %}>Sort by CPU</option>
+                                <option value="memory" {% if sort == 'memory' %}selected{% endif %}>Sort by Memory</option>
+                                <option value="name" {% if sort == 'name' %}selected{% endif %}>Sort by Name</option>
+                                <option value="time" {% if sort == 'time' %}selected{% endif %}>Sort by Time</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-primary w-100" onclick="applyFilters()">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                                <i class="fas fa-undo"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="processTable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Process Name</th>
+                                    <th>PID</th>
+                                    <th>User</th>
+                                    <th>CPU %</th>
+                                    <th>Memory %</th>
+                                    <th>Connections</th>
+                                    <th>Files</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="processTableBody">
+                                {% if activities and activities.items and activities.items|length > 0 %}
+                                    {% for activity in activities.items %}
+                                    <tr class="{% if activity.is_suspicious %}table-danger{% endif %}" id="process-{{ activity.id }}">
+                                        <td>{{ activity.timestamp.strftime('%H:%M:%S') }}</td>
+                                        <td>
+                                            <strong>{{ activity.process_name }}</strong>
+                                        </td>
+                                        <td>{{ activity.process_id }}</td>
+                                        <td>{{ activity.user }}</td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar {% if activity.cpu_usage > 80 %}bg-danger{% elif activity.cpu_usage > 50 %}bg-warning{% else %}bg-success{% endif %}" 
+                                                     role="progressbar" style="width: {{ activity.cpu_usage }}%;">
+                                                    {{ "%.1f"|format(activity.cpu_usage) }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-info" role="progressbar" 
+                                                     style="width: {{ activity.memory_usage }}%;">
+                                                    {{ "%.1f"|format(activity.memory_usage) }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge bg-secondary">{{ activity.network_connections }}</span></td>
+                                        <td><span class="badge bg-secondary">{{ activity.open_files }}</span></td>
+                                        <td>
+                                            {% if activity.is_suspicious %}
+                                            <span class="badge bg-danger">Suspicious</span>
+                                            {% else %}
+                                            <span class="badge bg-success">Normal</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info" onclick="viewProcess({{ activity.process_id }})">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            {% if activity.is_suspicious %}
+                                            <button class="btn btn-sm btn-danger" onclick="killProcess({{ activity.process_id }}, '{{ activity.process_name }}')">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="10" class="text-center">
+                                            <div class="py-5">
+                                                <i class="fas fa-database fa-4x text-gray-300 mb-3"></i>
+                                                <h5 class="text-gray-500">No Process Data Available</h5>
+                                                <p class="text-muted mb-3">The host monitor is collecting real-time data from your system.</p>
+                                                <div class="progress w-50 mx-auto">
+                                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                         role="progressbar" style="width: 100%"></div>
+                                                </div>
+                                                <button class="btn btn-primary mt-3" onclick="refreshProcesses()">
+                                                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if activities and activities.items and activities.pages > 1 %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if activities.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('host_monitor', page=activities.prev_num, search=search, status=status, sort=sort) }}">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link"><i class="fas fa-chevron-left"></i> Previous</span>
+                            </li>
+                            {% endif %}
+
+                            {% for page_num in activities.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                {% if page_num %}
+                                    {% if page_num == activities.page %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('host_monitor', page=page_num, search=search, status=status, sort=sort) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if activities.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('host_monitor', page=activities.next_num, search=search, status=status, sort=sort) }}">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Next <i class="fas fa-chevron-right"></i></span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Process Detail Modal -->
+<div class="modal fade" id="processModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Process Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="processModalBody">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="killCurrentBtn" style="display: none;" onclick="killCurrentProcess()">Kill Process</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kill Confirmation Modal -->
+<div class="modal fade" id="killConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Kill Process
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to kill the process:</p>
+                <p class="fw-bold" id="killProcessName"></p>
+                <p class="text-danger">This action cannot be undone!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmKillBtn">Kill Process</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+<script>
+    // Host Monitor State Manager
+    class HostMonitorState {
+        constructor() {
+            this.data = {
+                stats: null,
+                topProcesses: [],
+                recentActivities: []
+            };
+            this.listeners = [];
+            this.isUpdating = false;
+            this.updateInterval = null;
+        }
+
+        setStats(data) {
+            this.data.stats = data;
+            this.notify('stats');
+        }
+
+        setTopProcesses(data) {
+            this.data.topProcesses = data;
+            this.notify('topProcesses');
+        }
+
+        setRecentActivities(data) {
+            this.data.recentActivities = data;
+            this.notify('recentActivities');
+        }
+
+        subscribe(listener) {
+            this.listeners.push(listener);
+        }
+
+        notify(component) {
+            this.listeners.forEach(fn => fn(this.data, component));
+        }
+
+        startAutoRefresh(interval = 3000) {
+            if (this.updateInterval) {
+                clearInterval(this.updateInterval);
+            }
+            this.updateInterval = setInterval(() => this.refreshAll(), interval);
+        }
+
+        stopAutoRefresh() {
+            if (this.updateInterval) {
+                clearInterval(this.updateInterval);
+                this.updateInterval = null;
+            }
+        }
+
+        async refreshAll() {
+            if (this.isUpdating) return;
+            this.isUpdating = true;
+
+            try {
+                const results = await Promise.allSettled([
+                    safeFetch('/api/host/stats'),
+                    safeFetch('/api/host/top-processes'),
+                    safeFetch('/api/host/recent-activities?limit=50')
+                ]);
+
+                if (results[0].status === 'fulfilled' && results[0].value) {
+                    this.setStats(results[0].value);
+                }
+                if (results[1].status === 'fulfilled' && results[1].value) {
+                    this.setTopProcesses(results[1].value);
+                }
+                if (results[2].status === 'fulfilled' && results[2].value) {
+                    this.setRecentActivities(results[2].value);
+                }
+
+            } catch (error) {
+                console.error('Host monitor refresh failed:', error);
+            } finally {
+                this.isUpdating = false;
+            }
+        }
+    }
+
+    // Initialize state
+    const hostState = new HostMonitorState();
+
+    // Chart instances
+    let cpuChart, memoryChart, diskChart;
+    let currentProcessId = null;
+    let currentProcessName = '';
+    let socket = io();
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Initializing host monitor...');
+        initCharts();
+        
+        // Subscribe to state changes
+        hostState.subscribe((data, component) => {
+            if (component === 'stats' && data.stats) {
+                updateStats(data.stats);
+                updateCharts(data.stats);
+            }
+            if (component === 'topProcesses' && data.topProcesses) {
+                updateTopProcessesTable(data.topProcesses);
+            }
+            if (component === 'recentActivities' && data.recentActivities) {
+                updateRecentActivitiesTable(data.recentActivities);
+            }
+        });
+
+        // Socket.IO event handlers
+        socket.on('connect', function() {
+            console.log('✅ Connected to real-time feed');
+            hostState.refreshAll();
+        });
+
+        socket.on('new_process_alert', function(alert) {
+            handleNewProcessAlert(alert);
+        });
+
+        socket.on('process_killed', function(data) {
+            handleProcessKilled(data);
+        });
+
+        // Start auto-refresh
+        hostState.startAutoRefresh(3000);
+        
+        // Initial data fetch
+        hostState.refreshAll();
+    });
+
+    async function safeFetch(url, fallback = null) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`Failed to fetch ${url}:`, error);
+            return fallback;
+        }
+    }
+
+    function initCharts() {
+        // CPU Chart
+        const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+        cpuChart = new Chart(cpuCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 20}, (_, i) => `-${19-i*3}s`),
+                datasets: [{
+                    label: 'CPU %',
+                    data: Array(20).fill(0),
+                    borderColor: '#36b9cc',
+                    backgroundColor: 'rgba(54, 185, 204, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 300 },
+                scales: {
+                    y: { beginAtZero: true, max: 100 }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Memory Chart
+        const memCtx = document.getElementById('memoryChart').getContext('2d');
+        memoryChart = new Chart(memCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 20}, (_, i) => `-${19-i*3}s`),
+                datasets: [{
+                    label: 'Memory %',
+                    data: Array(20).fill(0),
+                    borderColor: '#1cc88a',
+                    backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 300 },
+                scales: {
+                    y: { beginAtZero: true, max: 100 }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Disk Chart
+        const diskCtx = document.getElementById('diskChart').getContext('2d');
+        diskChart = new Chart(diskCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 20}, (_, i) => `-${19-i*3}s`),
+                datasets: [{
+                    label: 'Disk %',
+                    data: Array(20).fill(0),
+                    borderColor: '#f6c23e',
+                    backgroundColor: 'rgba(246, 194, 62, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 300 },
+                scales: {
+                    y: { beginAtZero: true, max: 100 }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    function updateStats(data) {
+        document.getElementById('totalProcesses').textContent = data.total_processes || '0';
+        document.getElementById('suspiciousProcesses').textContent = data.suspicious_processes || '0';
+        document.getElementById('systemUptime').textContent = data.uptime || '0d 0h 0m';
+        document.getElementById('activeUsers').textContent = data.active_users || '0';
+        
+        document.getElementById('currentCpu').textContent = data.cpu_percent ? data.cpu_percent.toFixed(1) + '%' : '0%';
+        document.getElementById('currentMemory').textContent = data.memory_percent ? data.memory_percent.toFixed(1) + '%' : '0%';
+        document.getElementById('currentDisk').textContent = data.disk_percent ? data.disk_percent.toFixed(1) + '%' : '0%';
+    }
+
+    function updateCharts(data) {
+        if (cpuChart && data.cpu_history) {
+            cpuChart.data.datasets[0].data = data.cpu_history;
+            cpuChart.update();
+        }
+        
+        if (memoryChart && data.memory_history) {
+            memoryChart.data.datasets[0].data = data.memory_history;
+            memoryChart.update();
+        }
+        
+        if (diskChart && data.disk_history) {
+            diskChart.data.datasets[0].data = data.disk_history;
+            diskChart.update();
+        }
+    }
+
+    function updateTopProcessesTable(processes) {
+        const tbody = document.getElementById('topProcessesBody');
+        if (!tbody) return;
+        
+        if (!processes || processes.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <div class="py-5">
+                            <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+                            <h5 class="text-gray-500">Collecting Process Data</h5>
+                            <p class="text-muted mb-3">The host monitor is gathering real-time process information from your system.</p>
+                            <div class="progress w-50 mx-auto">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        let html = '';
+        processes.forEach(proc => {
+            const suspiciousClass = proc.is_suspicious ? 'table-danger' : '';
+            const cpuClass = proc.cpu_usage > 80 ? 'bg-danger' : proc.cpu_usage > 50 ? 'bg-warning' : 'bg-success';
+            
+            html += `
+            <tr class="${suspiciousClass}">
+                <td>
+                    <i class="fas fa-cog me-2"></i>${proc.process_name}
+                    ${proc.is_suspicious ? '<span class="badge bg-danger ms-2">Suspicious</span>' : ''}
+                </td>
+                <td>${proc.process_id}</td>
+                <td>${proc.user}</td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar ${cpuClass}" 
+                             role="progressbar" style="width: ${proc.cpu_usage}%;">
+                            ${proc.cpu_usage.toFixed(1)}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-info" role="progressbar" 
+                             style="width: ${proc.memory_usage}%;">
+                            ${proc.memory_usage.toFixed(1)}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    ${proc.is_suspicious ? 
+                      '<span class="badge bg-danger">⚠️ Suspicious</span>' : 
+                      '<span class="badge bg-success">✓ Normal</span>'}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewProcess(${proc.process_id})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${proc.is_suspicious ? 
+                      `<button class="btn btn-sm btn-danger" onclick="killProcess(${proc.process_id}, '${proc.process_name}')">
+                          <i class="fas fa-times"></i>
+                       </button>` : ''}
+                </td>
+            </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+
+    function updateRecentActivitiesTable(activities) {
+        const tbody = document.getElementById('processTableBody');
+        if (!tbody) return;
+        
+        if (!activities || activities.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center">
+                        <div class="py-5">
+                            <i class="fas fa-database fa-4x text-gray-300 mb-3"></i>
+                            <h5 class="text-gray-500">No Process Data Available</h5>
+                            <p class="text-muted mb-3">The host monitor is collecting real-time data from your system.</p>
+                            <div class="progress w-50 mx-auto">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 100%"></div>
+                            </div>
+                            <button class="btn btn-primary mt-3" onclick="refreshProcesses()">
+                                <i class="fas fa-sync-alt me-2"></i>Refresh
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        let html = '';
+        activities.forEach(activity => {
+            const suspiciousClass = activity.is_suspicious ? 'table-danger' : '';
+            const cpuClass = activity.cpu_usage > 80 ? 'bg-danger' : activity.cpu_usage > 50 ? 'bg-warning' : 'bg-success';
+            
+            html += `
+            <tr class="${suspiciousClass}">
+                <td>${activity.timestamp ? new Date(activity.timestamp).toLocaleTimeString() : 'N/A'}</td>
+                <td><strong>${activity.process_name}</strong></td>
+                <td>${activity.process_id}</td>
+                <td>${activity.user}</td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar ${cpuClass}" 
+                             role="progressbar" style="width: ${activity.cpu_usage}%;">
+                            ${activity.cpu_usage.toFixed(1)}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-info" role="progressbar" 
+                             style="width: ${activity.memory_usage}%;">
+                            ${activity.memory_usage.toFixed(1)}%
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge bg-secondary">${activity.network_connections || 0}</span></td>
+                <td><span class="badge bg-secondary">${activity.open_files || 0}</span></td>
+                <td>
+                    ${activity.is_suspicious ? 
+                      '<span class="badge bg-danger">Suspicious</span>' : 
+                      '<span class="badge bg-success">Normal</span>'}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewProcess(${activity.process_id})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${activity.is_suspicious ? 
+                      `<button class="btn btn-sm btn-danger" onclick="killProcess(${activity.process_id}, '${activity.process_name}')">
+                          <i class="fas fa-times"></i>
+                       </button>` : ''}
+                </td>
+            </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+
+    function startHostMonitoring() {
+        fetch('/api/host/start', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Host monitoring started', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                }
+            })
+            .catch(error => showNotification('Error starting host monitor', 'danger'));
+    }
+
+    function refreshProcesses() {
+        hostState.refreshAll();
+        showNotification('Refreshing process data...', 'info');
+    }
+
+    function killSuspicious() {
+        if (confirm('⚠️ Are you sure you want to kill all suspicious processes?')) {
+            fetch('/api/host/kill-suspicious', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(`✅ Killed ${data.count} suspicious processes`, 'success');
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showNotification(`❌ Error: ${data.error}`, 'danger');
+                }
+            })
+            .catch(error => showNotification('❌ Error killing processes', 'danger'));
+        }
+    }
+
+    function viewProcess(pid) {
+        currentProcessId = pid;
+        
+        const modalBody = document.getElementById('processModalBody');
+        modalBody.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        
+        fetch(`/api/host/process/${pid}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    modalBody.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            ${data.error}
+                        </div>
+                    `;
+                    document.getElementById('killCurrentBtn').style.display = 'none';
+                } else {
+                    displayProcessDetails(data);
+                }
+            })
+            .catch(error => {
+                modalBody.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Error loading process details
+                    </div>
+                `;
+                document.getElementById('killCurrentBtn').style.display = 'none';
+            });
+        
+        new bootstrap.Modal(document.getElementById('processModal')).show();
+    }
+
+    function displayProcessDetails(data) {
+        const modalBody = document.getElementById('processModalBody');
+        
+        const connectionsHtml = data.connections && data.connections.length > 0 
+            ? data.connections.map(c => `<tr><td>${c.local}</td><td>${c.remote}</td><td>${c.status}</td></tr>`).join('')
+            : '<tr><td colspan="3" class="text-center">No active connections</td></tr>';
+        
+        const filesHtml = data.open_files && data.open_files.length > 0
+            ? data.open_files.map(f => `<tr><td>${f.path}</td><td>${f.mode}</td></tr>`).join('')
+            : '<tr><td colspan="2" class="text-center">No open files</td></tr>';
+        
+        modalBody.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Process Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th style="width: 40%">PID:</th>
+                                    <td><strong>${data.pid}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>Name:</th>
+                                    <td>${data.name}</td>
+                                </tr>
+                                <tr>
+                                    <th>User:</th>
+                                    <td>${data.user}</td>
+                                </tr>
+                                <tr>
+                                    <th>CPU Usage:</th>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar ${data.cpu > 80 ? 'bg-danger' : data.cpu > 50 ? 'bg-warning' : 'bg-success'}" 
+                                                 role="progressbar" style="width: ${data.cpu}%;">
+                                                ${data.cpu.toFixed(1)}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Memory:</th>
+                                    <td>${data.memory} MB (${data.memory_percent.toFixed(1)}%)</td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td>
+                                        <span class="badge ${data.status === 'running' ? 'bg-success' : 'bg-secondary'}">
+                                            ${data.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Threads:</th>
+                                    <td>${data.threads}</td>
+                                </tr>
+                                <tr>
+                                    <th>Created:</th>
+                                    <td>${new Date(data.create_time).toLocaleString()}</td>
+                                </tr>
+                                <tr>
+                                    <th>Suspicious:</th>
+                                    <td>
+                                        ${data.suspicious ? 
+                                          `<span class="badge bg-danger">Yes - ${data.suspicious_reason || ''}</span>` : 
+                                          '<span class="badge bg-success">No</span>'}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0"><i class="fas fa-network-wired me-2"></i>Network Connections</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr><th>Local</th><th>Remote</th><th>Status</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        ${connectionsHtml}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header bg-warning text-white">
+                            <h6 class="mb-0"><i class="fas fa-file me-2"></i>Open Files</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div style="max-height: 150px; overflow-y: auto;">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr><th>Path</th><th>Mode</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        ${filesHtml}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('killCurrentBtn').style.display = data.suspicious ? 'inline-block' : 'none';
+    }
+
+    function killProcess(pid, name) {
+        currentProcessId = pid;
+        currentProcessName = name;
+        document.getElementById('killProcessName').textContent = `${name} (PID: ${pid})`;
+        new bootstrap.Modal(document.getElementById('killConfirmModal')).show();
+    }
+
+    function killCurrentProcess() {
+        if (currentProcessId) {
+            killProcess(currentProcessId, 'Selected Process');
+        }
+    }
+
+    document.getElementById('confirmKillBtn')?.addEventListener('click', function() {
+        if (currentProcessId) {
+            fetch(`/api/host/kill/${currentProcessId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(`✅ Process ${currentProcessName} terminated`, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification(`❌ Error: ${data.error}`, 'danger');
+                }
+            })
+            .catch(error => showNotification('❌ Error killing process', 'danger'));
+            
+            bootstrap.Modal.getInstance(document.getElementById('killConfirmModal'))?.hide();
+            bootstrap.Modal.getInstance(document.getElementById('processModal'))?.hide();
+        }
+    });
+
+    function handleNewProcessAlert(alert) {
+        // Play sound
+        let audio = new Audio('/static/sounds/alert.mp3');
+        audio.play().catch(e => console.log('Audio play failed:', e));
+        
+        showNotification(`New suspicious process: ${alert.process_name}`, 'danger');
+        hostState.refreshAll();
+    }
+
+    function handleProcessKilled(data) {
+        showNotification(`Process ${data.pid} terminated`, 'success');
+        hostState.refreshAll();
+    }
+
+    function applyFilters() {
+        const search = document.getElementById('searchProcess').value;
+        const status = document.getElementById('filterStatus').value;
+        const sort = document.getElementById('sortBy').value;
+        
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (status !== 'all') params.append('status', status);
+        if (sort !== 'cpu') params.append('sort', sort);
+        
+        window.location.href = window.location.pathname + '?' + params.toString();
+    }
+
+    function resetFilters() {
+        window.location.href = window.location.pathname;
+    }
+
+    function exportProcesses() {
+        window.location.href = '/export/processes?format=csv';
+    }
+
+    function showNotification(message, type) {
+        const toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            const container = document.createElement('div');
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+        }
+        
+        const bgColor = {
+            'success': '#28a745',
+            'danger': '#dc3545',
+            'warning': '#ffc107',
+            'info': '#17a2b8'
+        }[type] || '#6c757d';
+        
+        const icon = {
+            'success': 'check-circle',
+            'danger': 'exclamation-circle',
+            'warning': 'exclamation-triangle',
+            'info': 'info-circle'
+        }[type] || 'info-circle';
+        
+        const toastId = 'toast-' + Date.now();
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white border-0 show" role="alert" style="background-color: ${bgColor};">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-${icon} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        document.querySelector('.toast-container').insertAdjacentHTML('beforeend', toastHTML);
+        
+        setTimeout(() => {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 5000);
+    }
+
+    // Cleanup
+    window.addEventListener('beforeunload', function() {
+        hostState.stopAutoRefresh();
+    });
+</script>
+
+<style>
+    .border-left-primary { border-left: 4px solid #4e73df; }
+    .border-left-danger { border-left: 4px solid #e74a3b; }
+    .border-left-info { border-left: 4px solid #36b9cc; }
+    .border-left-success { border-left: 4px solid #1cc88a; }
+    
+    .card { 
+        transition: transform 0.2s; 
+        border-radius: 10px; 
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    
+    .card:hover { 
+        transform: translateY(-2px); 
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); 
+    }
+    
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .progress { 
+        background-color: #eaecf4; 
+        border-radius: 0.35rem; 
+    }
+    
+    .table td, .table th { 
+        vertical-align: middle; 
+    }
+    
+    .chart-area { 
+        position: relative; 
+    }
+    
+    .badge { 
+        font-size: 0.75rem; 
+        padding: 0.35rem 0.65rem; 
+    }
+    
+    .btn { 
+        transition: all 0.2s; 
+    }
+    
+    .btn:hover { 
+        transform: translateY(-1px); 
+        box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.1); 
+    }
+    
+    .table-danger { 
+        background-color: rgba(231, 74, 59, 0.1); 
+    }
+    
+    .toast-container { 
+        min-width: 300px; 
+    }
+    
+    .toast {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn-close-white {
+        filter: brightness(0) invert(1);
+    }
+    
+    .modal-content {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .modal-header {
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .table-sm th {
+        width: 40%;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    .progress-bar-animated {
+        animation: progress-bar-stripes 1s linear infinite;
+    }
+</style>
+{% endblock %}

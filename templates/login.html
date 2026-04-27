@@ -1,0 +1,142 @@
+<!-- templates/login.html -->
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg border-0 rounded-lg mt-5">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h3 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Riley Falcon IDPS
+                    </h3>
+                    <p class="mb-0 mt-2 small">Intrusion Detection & Prevention System</p>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-envelope me-2 text-primary"></i>Email Address
+                            </label>
+                            {{ form.email(class="form-control form-control-lg", placeholder="user@rileyfalcon.com") }}
+                            {% if form.email.errors %}
+                                {% for error in form.email.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>Use your company email: @rileyfalcon.com
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-lock me-2 text-primary"></i>Password
+                            </label>
+                            {{ form.password(class="form-control form-control-lg", placeholder="Enter your password") }}
+                            {% if form.password.errors %}
+                                {% for error in form.password.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.remember(class="form-check-input") }}
+                            <label class="form-check-label" for="remember">
+                                Remember me on this device
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('forgot_password') }}" class="text-muted small">
+                            <i class="fas fa-key me-1"></i>Forgot Password?
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-center py-3 bg-light">
+                    <div class="small">
+                        Don't have an account? 
+                        <a href="{{ url_for('register') }}" class="text-primary fw-bold">
+                            Register here
+                        </a>
+                    </div>
+                    <div class="small mt-2 text-muted">
+                        <i class="fas fa-clock me-1"></i>East Africa Time (EAT)
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Info -->
+            <div class="text-center mt-3 text-white-50">
+                <small>
+                    <i class="fas fa-lock me-1"></i>
+                    <i class="fas fa-shield me-1"></i>
+                    <i class="fas fa-eye me-1"></i>
+                    Riley Falcon Security Services - IT Department
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+    .card {
+        backdrop-filter: blur(10px);
+        border: none;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    }
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        transition: transform 0.3s;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .text-white-50 {
+        color: rgba(255,255,255,0.8) !important;
+    }
+    .form-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    a.text-muted:hover {
+        color: #667eea !important;
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}

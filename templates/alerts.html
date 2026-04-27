@@ -1,0 +1,981 @@
+<!-- templates/alerts.html -->
+{% extends "base.html" %}
+
+{% block title %}Alerts{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">
+                <i class="fas fa-exclamation-triangle"></i> Security Alerts
+            </h1>
+        </div>
+    </div>
+
+    <!-- Alert Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Critical Alerts</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="criticalCount">{{ critical_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-skull-crossbones fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 small text-muted">
+                        <span id="criticalChange" class="text-danger"><i class="fas fa-arrow-up"></i> +0</span> from last hour
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                High Alerts</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="highCount">{{ high_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 small text-muted">
+                        <span id="highChange" class="text-warning"><i class="fas fa-minus"></i> 0</span> from last hour
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Medium Alerts</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="mediumCount">{{ medium_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 small text-muted">
+                        <span id="mediumChange" class="text-success"><i class="fas fa-arrow-down"></i> -0</span> from last hour
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Low Alerts</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="lowCount">{{ low_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-info-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2 small text-muted">
+                        <span id="lowChange" class="text-success"><i class="fas fa-arrow-down"></i> -0</span> from last hour
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Charts -->
+    <div class="row mb-4">
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-line"></i> Alert Trends (Last 12 Hours)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 300px;">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-pie"></i> Alert Distribution
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie" style="height: 200px;">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                    <div class="mt-3">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="mb-2">
+                                    <span class="badge bg-danger">Critical</span>
+                                    <span class="float-end" id="criticalPercent">0%</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-warning">High</span>
+                                    <span class="float-end" id="highPercent">0%</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-2">
+                                    <span class="badge bg-info">Medium</span>
+                                    <span class="float-end" id="mediumPercent">0%</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-success">Low</span>
+                                    <span class="float-end" id="lowPercent">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-2">
+                            <select class="form-select" id="severityFilter">
+                                <option value="all" {% if current_severity == 'all' %}selected{% endif %}>All Severities</option>
+                                <option value="critical" {% if current_severity == 'critical' %}selected{% endif %}>Critical</option>
+                                <option value="high" {% if current_severity == 'high' %}selected{% endif %}>High</option>
+                                <option value="medium" {% if current_severity == 'medium' %}selected{% endif %}>Medium</option>
+                                <option value="low" {% if current_severity == 'low' %}selected{% endif %}>Low</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="typeFilter">
+                                <option value="all" {% if current_type == 'all' %}selected{% endif %}>All Types</option>
+                                <option value="signature" {% if current_type == 'signature' %}selected{% endif %}>Signature-Based</option>
+                                <option value="anomaly" {% if current_type == 'anomaly' %}selected{% endif %}>Anomaly-Based</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="sourceFilter">
+                                <option value="all" {% if current_source == 'all' %}selected{% endif %}>All Sources</option>
+                                <option value="network" {% if current_source == 'network' %}selected{% endif %}>Network</option>
+                                <option value="host" {% if current_source == 'host' %}selected{% endif %}>Host</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="statusFilter">
+                                <option value="all" {% if current_status == 'all' %}selected{% endif %}>All Status</option>
+                                <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+                                <option value="resolved" {% if current_status == 'resolved' %}selected{% endif %}>Resolved</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="text" class="form-control" id="searchAlert" placeholder="🔍 Search alerts..." value="{{ search }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="applyFilters()">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list"></i> Alert List
+                    </h6>
+                    <div>
+                        <button class="btn btn-sm btn-success me-2" onclick="exportAlerts()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="resolveAll()">
+                            <i class="fas fa-check-double"></i> Resolve All
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="alertsTable">
+                            <thead>
+                                <tr>
+                                    <th>Time (EAT)</th>
+                                    <th>Severity</th>
+                                    <th>Type</th>
+                                    <th>Source</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alertsTableBody">
+                                {% if alerts and alerts.items %}
+                                    {% for alert in alerts.items %}
+                                    <tr class="{% if not alert.is_resolved %}font-weight-bold{% endif %} 
+                                               {% if alert.severity == 'critical' %}table-danger
+                                               {% elif alert.severity == 'high' %}table-warning
+                                               {% elif alert.severity == 'medium' %}table-info
+                                               {% endif %}" id="alert-{{ alert.id }}">
+                                        <td>{{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                        <td>
+                                            <span class="badge {% if alert.severity == 'critical' %}bg-danger
+                                                              {% elif alert.severity == 'high' %}bg-warning
+                                                              {% elif alert.severity == 'medium' %}bg-info
+                                                              {% else %}bg-success{% endif %}">
+                                                {{ alert.severity|upper }}
+                                            </span>
+                                        </td>
+                                        <td>{{ alert.alert_type|title }}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ alert.source|upper }}</span>
+                                        </td>
+                                        <td>
+                                            <span title="{{ alert.details }}">{{ alert.description }}</span>
+                                        </td>
+                                        <td>
+                                            {% if alert.is_resolved %}
+                                            <span class="badge bg-success">Resolved</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">Active</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info" onclick="viewDetails('{{ alert.details|escape }}')" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            {% if not alert.is_resolved %}
+                                            <button class="btn btn-sm btn-success" onclick="resolveAlert({{ alert.id }})" title="Resolve">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button class="btn btn-sm btn-primary" onclick="investigateAlert({{ alert.id }})" title="Investigate">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center">
+                                            <div class="py-5">
+                                                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                                                <h5 class="text-gray-500">No Alerts Found</h5>
+                                                <p class="text-muted">Your system is secure. No alerts match the current filters.</p>
+                                                {% if search or current_severity != 'all' or current_type != 'all' or current_source != 'all' or current_status != 'all' %}
+                                                <button class="btn btn-primary mt-2" onclick="resetFilters()">
+                                                    <i class="fas fa-undo me-2"></i>Reset Filters
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if alerts and alerts.items and alerts.pages > 1 %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if alerts.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('alerts', page=alerts.prev_num, severity=current_severity, type=current_type, source=current_source, status=current_status, search=search) }}">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link"><i class="fas fa-chevron-left"></i> Previous</span>
+                            </li>
+                            {% endif %}
+
+                            {% for page_num in alerts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                {% if page_num %}
+                                    {% if page_num == alerts.page %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('alerts', page=page_num, severity=current_severity, type=current_type, source=current_source, status=current_status, search=search) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if alerts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('alerts', page=alerts.next_num, severity=current_severity, type=current_type, source=current_source, status=current_status, search=search) }}">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Next <i class="fas fa-chevron-right"></i></span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Alert Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailsModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="resolveFromModal" onclick="resolveFromModal()">Resolve Alert</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kill Confirmation Modal -->
+<div class="modal fade" id="killConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Kill Process
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to kill the process:</p>
+                <p class="fw-bold" id="killProcessName"></p>
+                <p class="text-danger">This action cannot be undone!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmKillBtn">Kill Process</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+<script>
+    let trendChart, distributionChart;
+    let currentAlertId = null;
+    let updateInterval;
+    let statsInterval;
+    let socket = io();
+
+    // Initialize charts
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Initializing alerts charts...');
+        initCharts();
+        startLiveUpdates();
+        fetchTrendData();
+        
+        // Socket.IO event handlers
+        socket.on('connect', function() {
+            console.log('✅ Connected to real-time feed');
+        });
+        
+        socket.on('new_alert', function(alert) {
+            console.log('🔔 New alert received:', alert);
+            handleNewAlert(alert);
+        });
+        
+        socket.on('alert_resolved', function(data) {
+            console.log('✅ Alert resolved:', data);
+            handleAlertResolved(data);
+        });
+        
+        socket.on('alerts_resolved_all', function(data) {
+            showNotification(`All alerts resolved by ${data.by}`, 'success');
+            setTimeout(() => location.reload(), 1500);
+        });
+        
+        socket.on('initial_alerts', function(alerts) {
+            console.log('📋 Initial alerts:', alerts);
+        });
+    });
+
+    function initCharts() {
+        // Trend Chart
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Critical',
+                        data: [],
+                        borderColor: '#e74a3b',
+                        backgroundColor: 'rgba(231, 74, 59, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: 'High',
+                        data: [],
+                        borderColor: '#f6c23e',
+                        backgroundColor: 'rgba(246, 194, 62, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: 'Medium',
+                        data: [],
+                        borderColor: '#36b9cc',
+                        backgroundColor: 'rgba(54, 185, 204, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: 'Low',
+                        data: [],
+                        borderColor: '#1cc88a',
+                        backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 300 },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Alerts'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Distribution Chart
+        const ctx2 = document.getElementById('distributionChart').getContext('2d');
+        distributionChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'High', 'Medium', 'Low'],
+                datasets: [{
+                    data: [{{ critical_count }}, {{ high_count }}, {{ medium_count }}, {{ low_count }}],
+                    backgroundColor: ['#e74a3b', '#f6c23e', '#36b9cc', '#1cc88a'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        updatePercentages();
+        updateTrendIndicators();
+    }
+
+    function fetchTrendData() {
+        fetch('/api/alerts/trends')
+            .then(response => response.json())
+            .then(data => {
+                if (data.labels && data.labels.length > 0) {
+                    trendChart.data.labels = data.labels;
+                    trendChart.data.datasets[0].data = data.critical;
+                    trendChart.data.datasets[1].data = data.high;
+                    trendChart.data.datasets[2].data = data.medium;
+                    trendChart.data.datasets[3].data = data.low;
+                    trendChart.update();
+                }
+            })
+            .catch(error => console.error('Error fetching trend data:', error));
+    }
+
+    function startLiveUpdates() {
+        // Update stats every 5 seconds
+        statsInterval = setInterval(fetchAlertStats, 5000);
+        
+        // Update trends every 30 seconds
+        updateInterval = setInterval(fetchTrendData, 30000);
+    }
+
+    function fetchAlertStats() {
+        fetch('/api/alerts/stats')
+            .then(response => response.json())
+            .then(data => {
+                updateStats(data);
+            })
+            .catch(error => console.error('Error fetching alert stats:', error));
+    }
+
+    function updateStats(data) {
+        // Update counts
+        document.getElementById('criticalCount').textContent = data.critical || 0;
+        document.getElementById('highCount').textContent = data.high || 0;
+        document.getElementById('mediumCount').textContent = data.medium || 0;
+        document.getElementById('lowCount').textContent = data.low || 0;
+        
+        // Update trends
+        updateTrendIndicator('critical', data.critical_trend || 0);
+        updateTrendIndicator('high', data.high_trend || 0);
+        updateTrendIndicator('medium', data.medium_trend || 0);
+        updateTrendIndicator('low', data.low_trend || 0);
+        
+        // Update distribution chart
+        distributionChart.data.datasets[0].data = [
+            data.critical || 0,
+            data.high || 0,
+            data.medium || 0,
+            data.low || 0
+        ];
+        distributionChart.update();
+        
+        updatePercentages();
+    }
+
+    function updateTrendIndicator(severity, trend) {
+        const element = document.getElementById(`${severity}Change`);
+        if (!element) return;
+        
+        if (trend > 0) {
+            element.innerHTML = `<i class="fas fa-arrow-up text-danger"></i> +${trend}`;
+            element.className = 'text-danger';
+        } else if (trend < 0) {
+            element.innerHTML = `<i class="fas fa-arrow-down text-success"></i> ${trend}`;
+            element.className = 'text-success';
+        } else {
+            element.innerHTML = `<i class="fas fa-minus text-warning"></i> 0`;
+            element.className = 'text-warning';
+        }
+    }
+
+    function updatePercentages() {
+        const total = {{ alerts.total }} || 1;
+        const critical = {{ critical_count }};
+        const high = {{ high_count }};
+        const medium = {{ medium_count }};
+        const low = {{ low_count }};
+        
+        document.getElementById('criticalPercent').textContent = total > 0 ? ((critical / total) * 100).toFixed(1) + '%' : '0%';
+        document.getElementById('highPercent').textContent = total > 0 ? ((high / total) * 100).toFixed(1) + '%' : '0%';
+        document.getElementById('mediumPercent').textContent = total > 0 ? ((medium / total) * 100).toFixed(1) + '%' : '0%';
+        document.getElementById('lowPercent').textContent = total > 0 ? ((low / total) * 100).toFixed(1) + '%' : '0%';
+    }
+
+    function updateTrendIndicators() {
+        const criticalTrend = {{ critical_count }} - {{ critical_last_hour|default(0) }};
+        const highTrend = {{ high_count }} - {{ high_last_hour|default(0) }};
+        const mediumTrend = {{ medium_count }} - {{ medium_last_hour|default(0) }};
+        const lowTrend = {{ low_count }} - {{ low_last_hour|default(0) }};
+        
+        updateTrendIndicator('critical', criticalTrend);
+        updateTrendIndicator('high', highTrend);
+        updateTrendIndicator('medium', mediumTrend);
+        updateTrendIndicator('low', lowTrend);
+    }
+
+    function handleNewAlert(alert) {
+        // Play sound
+        let audio = new Audio('/static/sounds/alert.mp3');
+        audio.play().catch(e => console.log('Audio play failed:', e));
+        
+        // Show notification
+        showNotification(`New ${alert.severity} alert: ${alert.description}`, alert.severity);
+        
+        // Add to table if on first page
+        if ({{ alerts.page }} === 1) {
+            addAlertToTable(alert);
+        }
+        
+        // Refresh stats
+        fetchAlertStats();
+    }
+
+    function handleAlertResolved(data) {
+        const row = document.getElementById(`alert-${data.alert_id}`);
+        if (row) {
+            row.classList.remove('font-weight-bold');
+            const statusCell = row.querySelector('td:nth-child(6)');
+            if (statusCell) {
+                statusCell.innerHTML = '<span class="badge bg-success">Resolved</span>';
+            }
+            const resolveBtn = row.querySelector('.btn-success');
+            if (resolveBtn) {
+                resolveBtn.remove();
+            }
+        }
+        showNotification(`Alert resolved by ${data.resolved_by}`, 'success');
+        fetchAlertStats();
+    }
+
+    function addAlertToTable(alert) {
+        const tbody = document.getElementById('alertsTableBody');
+        if (!tbody) return;
+        
+        // Check if alert already exists
+        if (document.getElementById(`alert-${alert.id}`)) {
+            return;
+        }
+        
+        const severityClass = alert.severity === 'critical' ? 'table-danger' :
+                             alert.severity === 'high' ? 'table-warning' :
+                             alert.severity === 'medium' ? 'table-info' : '';
+        
+        const severityBadge = alert.severity === 'critical' ? 'bg-danger' :
+                             alert.severity === 'high' ? 'bg-warning' :
+                             alert.severity === 'medium' ? 'bg-info' : 'bg-success';
+        
+        const newRow = document.createElement('tr');
+        newRow.id = `alert-${alert.id}`;
+        newRow.className = `font-weight-bold ${severityClass}`;
+        
+        newRow.innerHTML = `
+            <td>${alert.timestamp}</td>
+            <td><span class="badge ${severityBadge}">${alert.severity.toUpperCase()}</span></td>
+            <td>${alert.type || 'Unknown'}</td>
+            <td><span class="badge bg-secondary">${alert.source || 'Unknown'}</span></td>
+            <td>${alert.description}</td>
+            <td><span class="badge bg-danger">Active</span></td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="viewDetails('${alert.details || ''}')" title="View Details">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-success" onclick="resolveAlert(${alert.id})" title="Resolve">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="investigateAlert(${alert.id})" title="Investigate">
+                    <i class="fas fa-search"></i>
+                </button>
+            </td>
+        `;
+        
+        tbody.insertBefore(newRow, tbody.firstChild);
+        
+        // Remove last row if more than 50
+        if (tbody.children.length > 50) {
+            tbody.removeChild(tbody.lastChild);
+        }
+    }
+
+    function applyFilters() {
+        const severity = document.getElementById('severityFilter').value;
+        const type = document.getElementById('typeFilter').value;
+        const source = document.getElementById('sourceFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        const search = document.getElementById('searchAlert').value;
+        
+        let params = new URLSearchParams();
+        if (severity !== 'all') params.append('severity', severity);
+        if (type !== 'all') params.append('type', type);
+        if (source !== 'all') params.append('source', source);
+        if (status !== 'all') params.append('status', status);
+        if (search) params.append('search', search);
+        
+        window.location.href = window.location.pathname + '?' + params.toString();
+    }
+
+    function resetFilters() {
+        window.location.href = window.location.pathname;
+    }
+
+    function viewDetails(details) {
+        let formattedDetails = details;
+        try {
+            // Try to parse as JSON for pretty printing
+            const jsonDetails = JSON.parse(details);
+            formattedDetails = JSON.stringify(jsonDetails, null, 2);
+        } catch (e) {
+            // Not JSON, use as is
+        }
+        
+        document.getElementById('detailsModalBody').innerHTML = `<pre style="white-space: pre-wrap; background: #f8f9fc; padding: 15px; border-radius: 5px;">${formattedDetails}</pre>`;
+        new bootstrap.Modal(document.getElementById('detailsModal')).show();
+    }
+
+    function resolveAlert(alertId) {
+        currentAlertId = alertId;
+        if (confirm('Mark this alert as resolved?')) {
+            fetch(`/resolve_alert/${alertId}`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Alert resolved successfully', 'success');
+                    // Update UI
+                    const row = document.getElementById(`alert-${alertId}`);
+                    if (row) {
+                        row.classList.remove('font-weight-bold');
+                        const statusCell = row.querySelector('td:nth-child(6)');
+                        if (statusCell) {
+                            statusCell.innerHTML = '<span class="badge bg-success">Resolved</span>';
+                        }
+                        const resolveBtn = row.querySelector('.btn-success');
+                        if (resolveBtn) {
+                            resolveBtn.remove();
+                        }
+                    }
+                } else {
+                    showNotification('Error resolving alert', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error resolving alert', 'danger');
+            });
+        }
+    }
+
+    function resolveFromModal() {
+        if (currentAlertId) {
+            resolveAlert(currentAlertId);
+            bootstrap.Modal.getInstance(document.getElementById('detailsModal')).hide();
+        }
+    }
+
+    function resolveAll() {
+        if (confirm('⚠️ Resolve all active alerts?')) {
+            fetch('/api/alerts/resolve-all', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(`✅ Resolved ${data.count} alerts`, 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showNotification(`❌ Error: ${data.error}`, 'danger');
+                    }
+                })
+                .catch(error => showNotification('❌ Error resolving alerts', 'danger'));
+        }
+    }
+
+    function investigateAlert(alertId) {
+        window.location.href = `/investigate/${alertId}`;
+    }
+
+    function exportAlerts() {
+        const severity = document.getElementById('severityFilter').value;
+        window.location.href = `/export/alerts?severity=${severity}&format=csv`;
+    }
+
+    function showNotification(message, type) {
+        const toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            const container = document.createElement('div');
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+        }
+        
+        const bgColor = {
+            'success': '#28a745',
+            'danger': '#dc3545',
+            'warning': '#ffc107',
+            'info': '#17a2b8',
+            'critical': '#dc3545',
+            'high': '#fd7e14',
+            'medium': '#ffc107',
+            'low': '#28a745'
+        }[type] || '#6c757d';
+        
+        const icon = {
+            'success': 'check-circle',
+            'danger': 'exclamation-circle',
+            'warning': 'exclamation-triangle',
+            'info': 'info-circle',
+            'critical': 'skull-crossbones',
+            'high': 'exclamation-circle',
+            'medium': 'exclamation',
+            'low': 'info-circle'
+        }[type] || 'info-circle';
+        
+        const toastId = 'toast-' + Date.now();
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white border-0 show" role="alert" style="background-color: ${bgColor};">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-${icon} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        document.querySelector('.toast-container').insertAdjacentHTML('beforeend', toastHTML);
+        
+        setTimeout(() => {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 5000);
+    }
+
+    // Cleanup
+    window.addEventListener('beforeunload', function() {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+        }
+        if (statsInterval) {
+            clearInterval(statsInterval);
+        }
+    });
+</script>
+
+<style>
+    .border-left-danger { border-left: 4px solid #e74a3b; }
+    .border-left-warning { border-left: 4px solid #f6c23e; }
+    .border-left-info { border-left: 4px solid #36b9cc; }
+    .border-left-success { border-left: 4px solid #1cc88a; }
+    .card { 
+        transition: transform 0.2s; 
+        border-radius: 10px; 
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    .card:hover { 
+        transform: translateY(-2px); 
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); 
+    }
+    .table td, .table th { 
+        vertical-align: middle; 
+    }
+    .chart-area { 
+        position: relative; 
+        height: 300px; 
+    }
+    .chart-pie { 
+        position: relative; 
+        height: 200px; 
+    }
+    .badge { 
+        font-size: 0.75rem; 
+        padding: 0.35rem 0.65rem; 
+    }
+    .btn { 
+        transition: all 0.2s; 
+        border-radius: 6px;
+    }
+    .btn:hover { 
+        transform: translateY(-1px); 
+        box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.1); 
+    }
+    .table-danger { 
+        background-color: rgba(231, 74, 59, 0.1); 
+    }
+    .table-warning { 
+        background-color: rgba(246, 194, 62, 0.1); 
+    }
+    .table-info { 
+        background-color: rgba(54, 185, 204, 0.1); 
+    }
+    .toast-container { 
+        min-width: 300px; 
+    }
+    .toast {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        margin-bottom: 0.5rem;
+    }
+    .btn-close-white {
+        filter: brightness(0) invert(1);
+    }
+    .modal-content {
+        border: none;
+        border-radius: 10px;
+    }
+    .modal-header {
+        border-radius: 10px 10px 0 0;
+    }
+    pre {
+        background-color: #f8f9fc;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #e3e6f0;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+</style>
+{% endblock %}
