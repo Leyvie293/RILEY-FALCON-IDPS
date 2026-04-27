@@ -37,7 +37,6 @@ APScheduler==3.10.4
 flask-socketio==5.3.4
 eventlet==0.33.3
 python-socketio==5.10.0
-gevent==23.9.1
 gevent-websocket==0.10.1
 
 # Network Monitoring
