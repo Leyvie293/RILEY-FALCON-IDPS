@@ -1,14 +1,15 @@
-# app.py - Entry point for Gunicorn on Render
+# app.py - Production entry point for Render ONLY
+# This file is specifically for Gunicorn on Render
+# Your local development still uses run.py
+
 from __init__ import create_app, socketio
 
-# Create the application instance
+# Create the application with production config
+# This matches what you have in run.py but for production
 app = create_app()
 
-# For Gunicorn to work with SocketIO
-# This makes the app compatible with SocketIO running under Gunicorn
-if __name__ != '__main__':
-    # When running under Gunicorn, we need to ensure socketio is initialized
-    socketio.init_app(app)
-
+# For Gunicorn with SocketIO support
 # The 'app' variable is what Gunicorn looks for
-# SocketIO will be handled by the eventlet worker
+
+# Note: We don't call socketio.run() here because Gunicorn handles that
+# SocketIO is initialized in __init__.py and will work with eventlet worker
