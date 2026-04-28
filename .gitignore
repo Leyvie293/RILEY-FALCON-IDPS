@@ -42,7 +42,6 @@ reports/
 Thumbs.db
 
 # Security
-config.py
 secrets.py
 *.key
 *.pem
